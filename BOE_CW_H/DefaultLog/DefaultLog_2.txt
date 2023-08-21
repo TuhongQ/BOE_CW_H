@@ -1,0 +1,21 @@
+2023-07-07 17:20:53.166 
+AppNameV.R3.MC.N1.0.03
+AppRootPathD:/Project/M4/MC_Release
+AppVersionV.R3.MC.N1.0.03
+BarcodeTypePSN
+CustomInfoFileF:/GDI-W09_8.0.0.21_SDCARD_20230320_01-B/Gaudi-W09D_Q8350_V3.1_Wifionly(8+256)_all_cn_V1.0.xls
+DUTCom53
+FactoryCodeDBG
+FixtureID治具2
+LineNameP01
+MesIsOnlinetrue
+Operator1213211
+ParallelID2
+PcNameThongPad_6C:24:08:AE:45:24
+SoftwareVerFileF:/GDI-W09_8.0.0.21_SDCARD_20230320_01-B/GDI-W09_GDI-W09 8.0.0.21(SP30C00E21R1P1log)_0009_all_cn_Verify_Table_MC.xls
+StationNameMC
+VersionListTypeCW
+WorkNameTC823
+2023-07-07 17:27:18.796 --------------------------Init---------------------------
+2023-07-07 17:27:18.908 扫码为空！
+2023-07-07 17:27:18.910 Time count:188

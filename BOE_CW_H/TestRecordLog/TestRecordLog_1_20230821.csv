@@ -1,0 +1,16 @@
+2023-08-21 10:35:28.289 ,13,1,WriteRKP,Fail,GetRkpAndVdData Is Fail!
+2023-08-21 13:12:02.600 ,321,1,WriteRKP,Fail,GetRkpAndVdData Is Fail!
+2023-08-21 13:30:26.533 ,13,1,CheckBoardSn,Fail,读取单板SN Is Fail!
+2023-08-21 13:30:26.744 ,13,1,CheckBoardID,Fail,Compare DUT Read_ProductName[HEY2-N09-650-200]With MES_ProductName[]  Is Fail!
+2023-08-21 13:30:27.363 ,13,1,CheckManufacturerFlag,Fail,Check PT Flag  Is Fail!
+2023-08-21 13:31:30.526 ,13,1,CheckMaintenance,Fail,CheckMaintenance Is Fail!
+2023-08-21 13:31:31.957 ,13,1,CheckSoftwareVersion,Fail,Error:Dut读取的数据与Excel中数据不一致.DUT[PRODCOMPVER:Product-HEY2 7.2.0(0000)] Excel[PRODCOMPVER:Product-HEY 6.0.0(0000)].
+2023-08-21 13:31:32.834 ,13,1,CheckHardwareSize,Fail,VerifyHardwareSize Is Fail!
+2023-08-21 13:31:33.091 ,13,1,WriteMobileSN,Fail,Error:MES分配的SN为空.
+2023-08-21 13:31:33.195 ,13,1,WriteBTMac,Fail,Error:MES分配的BT_MAC是空值.
+2023-08-21 13:31:33.304 ,13,1,WriteWIFIMac,Fail,Error: MES分配的WLAN_MAC是空值.
+2023-08-21 13:32:40.084 ,13,1,WriteDeviceCerts,Fail,WriteDeviceCerts Is Fail!
+2023-08-21 13:33:40.512 ,13,1,WriteTrustDeviceIDS,Fail,WriteTrustDeviceIDS Is Fail!
+2023-08-21 13:33:48.533 ,13,1,UploadInformation,Fail,Post Result Data To MES  Is Fail!
+2023-08-21 15:37:30.645 ,123,1,CheckBoardSn,Fail,读取单板SN Is Fail!
+2023-08-21 16:35:01.170 ,123,1,CheckBoardSn,Fail,读取单板SN Is Fail!

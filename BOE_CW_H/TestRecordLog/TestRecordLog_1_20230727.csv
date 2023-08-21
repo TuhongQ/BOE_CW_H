@@ -1,0 +1,17 @@
+2023-07-27 15:06:48.697 ,77,1,Init,Fail,ResetDog Is Fail
+2023-07-27 16:01:33.194 ,112,1,Init,Fail,initParam  Is Fail!
+2023-07-27 16:02:56.135 ,44,1,Init,Fail,Init Is Fail!
+2023-07-27 16:07:11.283 ,555,1,Init,Fail,读取降级标志位 Is Fail!
+2023-07-27 16:44:29.372 ,124345,1,Init,Fail,Init Is Fail!
+2023-07-27 16:45:36.681 ,000,1,Init,Fail,Init Is Fail!
+2023-07-27 16:49:06.348 ,333,1,DeleteExtLog,Fail,DeleteExtLog Is Fail!
+2023-07-27 16:50:57.438 ,4444,1,CheckBoardSn,Fail,读取单板SN Is Fail!
+2023-07-27 16:52:28.086 ,000,1,CheckBoardSn,Fail,读取单板SN Is Fail!
+2023-07-27 16:55:33.254 ,666,1,CheckBoardSn,Fail,读取单板SN Is Fail!
+2023-07-27 16:56:43.960 ,666,1,CheckBoardID,Fail,ReadProductName Is Fail!
+2023-07-27 17:00:16.289 ,999,1,CheckManufacturerFlag,Fail,Check MT Flag  Is Fail!
+2023-07-27 17:01:59.736 ,333,1,SetFactoryVer,Fail,设置工厂版本防回退标志位 Is Fail!
+2023-07-27 17:03:12.962 ,666,1,SetFactoryVer,Fail,设置工厂版本防回退标志位 Is Fail!
+2023-07-27 17:06:08.958 ,6666,1,EraseAccount,Fail,EraseAccount Is Fail!
+2023-07-27 17:08:35.084 ,65656,1,CheckBatteryLevel,Fail,ReadBatteryPower Fail!
+2023-07-27 17:10:54.014 ,666,1,CheckMaintenance,Fail,CheckMaintenance Is Fail!

@@ -1,0 +1,7 @@
+2023-08-03 10:12:55.221 ,000,1,CheckBoardID,Fail,Compare DUT Read_ProductName[HEY2-W09]With MES_ProductName[]  Is Fail!
+2023-08-03 10:14:46.997 ,333,1,CheckManufacturerFlag,Fail,Check PT Flag  Is Fail!
+2023-08-03 10:21:58.354 ,999,1,CheckMaintenance,Fail,CheckMaintenance Is Fail!
+2023-08-03 10:28:06.507 ,666,1,CheckSoftwareVersion,Fail,Error:Dut读取的数据与Excel中数据不一致.DUT[PRODCOMPVER:Product-HEY2 8.0.0(0000)] Excel[PRODCOMPVER:Product-HEY 6.0.0(0000)].
+2023-08-03 10:33:06.042 ,999,1,CheckHardwareSize,Fail,VerifyHardwareSize Is Fail!
+2023-08-03 10:33:58.072 ,000,1,WriteMobileSN,Fail,Error:MES分配的SN为空.
+2023-08-03 11:04:40.891 ,00,1,WriteBTMac,Fail,Error:MES分配的BT_MAC是空值.

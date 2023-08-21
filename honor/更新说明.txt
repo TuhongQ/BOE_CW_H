@@ -1,0 +1,133 @@
+V0.7  定制库更新组件说明：
+
+1、修改如下测试接口的CmdID值，对应函数增加isQualPlat参数，当前高通平台产品，入参为true;
+对应接口               测试组件名称       
+SetMMI2AutoRunFlag   CustomizationKeyAction      
+WriteSimcardMode      WriteCiphertextCustomization
+WriteUDID             WriteCiphertextCustomization
+WriteSN                  WriteCiphertextCustomization
+WriteBarcode         WriteCiphertextCustomization
+WriteBTMAC          WriteCiphertextCustomization
+WriteWifiMAC               WriteCiphertextCustomization
+WriteFrpKey           WriteCiphertextCustomization
+WriteUserLock              WriteCiphertextCustomization
+WriteAccLock         WriteCiphertextCustomization
+
+2、更新libMetkPhysicalNumber.dll组件实现逻辑；
+1)、写物理号接口(MetkWritePhysicalNumber)已验证ok；
+2)、校验OEM物理号信息接口(MetkCheckPhysicalNumber)已验证ok；
+3)、校验NV物理号信息接口仍在调试中，下版本更新。
+
+
+V0.8
+1、更新写SN接口
+TestWriteCiphertextCustomization-写单板条码.exe  //调试demo
+
+2、更新写MMI标志位接口
+libManufactureFlag.dll
+TestManufactureFlag-写TMMI.exe         //调试demo
+
+V0.9
+1、增加fastboot鉴权接口：
+libBaseFastboot.dll
+libAuthenticateFastboot.dll
+TestAuthenticateFastboot -fastboot鉴权+写研发模式.exe  //调试demo
+
+【TestAuthenticateFastboot.exe使用前，先手动进入fastboot模式->执行“搜索端口\依赖的dll\TestSetTestMode.exe”任意输入得到手机端口"PCIROOT(0)#PCI(1D00)#USBROOT(0)#USB(1)#USB(4)",
+->再次执行“搜索端口\依赖的dll\TestSetTestMode.exe”输入上一步得到的端口回车得到端口“\\?\usb#vid_18d1&pid_d00d#6&2ec5e233&0&4#{a5dcbf10-6530-11d2-901f-00c04fb951ed}”->
+执行demo “TestAuthenticateFastboot.exe” 端口输入“\\?\usb#vid_18d1&pid_d00d#6&2ec5e233&0&4#{a5dcbf10-6530-11d2-901f-00c04fb951ed}”即可】
+
+
+V1.0
+1、libCustomizationKeyAction.dll增加EraseOEMPhyNum接口，
+功能：返工手机进行OEMINFO信息(IMEI、MEID、ESN)擦除；
+2、libMetkCheckNV.dll增加QualCheckNVStatus接口，
+功能：Q平台NVCHECK；
+3、libMetkPhysicalNumber.dll增加QualCheckPhysicalNumber接口，
+功能：Q平台物理号校验（包含OEM物理号信息校验+NV信息校验）
+4、libWriteCiphertextCustomization.dll增加WriteFuseGid接口，
+功能：写入锁卡表 FUSE_GID定制字段
+
+
+V1.1
+1、libCustomizationKeyAction.dll 更新设置MMI2自启动接口
+
+
+V1.2
+1、增加libVerifyFile.dll、libSetTestMode.dll 接口，DBC使用
+
+2、定制库修改：
+1)、增加CheckFuseGid接口；
+2)、增加WriteAUTHEN写鉴权标志位接口；
+3)、VerifyKeyAttestation接口修改：兼容Q平台指令返回为ATTSTVERIFY:QCOM,INVALID的场景
+4)、WriteKeyAttestation接口修改：兼容key4为"===RESERVED==="或者"===reserved==="的场景
+其他接口无变化，均为接口内部逻辑优化，请替换最新dll验证。
+
+V1.3
+1、增加fastboot加载烧片功能
+22、增加《接口使用说明.doc》说明文档
+
+V1.4
+1、Checknv接口增加nvsetmask参数； 
+2、增加Q 平台锁卡功能； 
+3、增加大屏写RUNMODE功能；(手机项目不使用) 
+4、修改谷歌证书key4入参内容判断的 bug；
+--WriteKeyAttestation接口的key4内容传入实际信息，如果为===RESERVED===或者===reserved===，会自动跳过叠加。
+
+V1.5
+1、增加烧片xml文件的checksum校验
+2、增加烧片xml文件中所有镜像文件的CRC校验
+3、增加完成烧片版本中指定镜像文件的CRC校验
+4、增加前三个功能的测试用例
+
+5、修改libQualSimlock.dll，QualCheckSimlock接口里面， 如果不锁卡场景（simlock_write为0），cfg入参为null即可。
+
+V1.6
+1、定制库修改：
+1)、READCUSTOMIZATION组件增加ReadSN接口：读取整机条码； 
+2)、CUSTOMIZATIONKEYACTION组件增加新接口36个(详细功能见头文件说明):
+1	SDUpdateMainVer
+2	FactoryResetCW
+3	FactoryResetForDemo
+4	QualSetNRWFlag
+5	QualGetNRWFlag
+6	QualCheckRWFlag
+7	QualEraseNRWFlag
+8	QualSetDutOffline
+9	QualCheckOnlineAndSetOffline
+10	QualNVEMMCSync
+11	DeleteSoftwareLog
+12	ReadSDCardState
+13	CheckUTFlag
+14	CheckPTFlag
+15	WriteOptimizeFlag
+16	ReadBoardId
+17	ReadSubBoardFlag
+18	ReadMMIFlag
+19	ReadBatteryPower
+20	ReadMaintenance
+21	ReadSoftwareVer
+22	SetCWFlag
+23	CheckCWFlag
+24	CheckSimSlot
+25	QualEraseModem
+26	QualRebootModem
+27	QualEraseCPPhyNum
+28	CheckBootState
+29	QualWriteNVItem
+30	QualCheckNV453
+31	QualGoldenCopy
+32	QualDelLogbat
+33	CheckMode
+34	StopAutoCharge
+35	StartAutoCharge
+36	CkeckSimCard
+
+3)修改Authenticate返回值错误的BUG
+
+
+
+
+
+
+

@@ -1,0 +1,9 @@
+2023-08-06 01:17:19.997 ,666,1,WriteBTMac,Fail,Error:MES分配的BT_MAC是空值.
+2023-08-06 01:27:50.559 ,999,1,WriteDeviceCerts,Fail,WriteDeviceCerts Is Fail!
+2023-08-06 01:31:06.474 ,000,1,CheckBatteryAntiFake,Fail,电池防伪 Is Fail!
+2023-08-06 01:32:09.532 ,999,1,UploadInformation,Fail,Post Result Data To MES  Is Fail!
+2023-08-06 01:36:19.752 ,000,1,CheckHardwareSize,Fail,VerifyHardwareSize Is Fail!
+2023-08-06 01:37:31.093 ,777,1,UploadInformation,Fail,Post Result Data To MES  Is Fail!
+2023-08-06 01:50:22.972 ,666,1,UploadInformation,Fail,Post Result Data To MES  Is Fail!
+2023-08-06 16:35:31.534 ,888,1,EraseModem,Fail,返工流程： QualSetDutOffline  Is Fail!
+2023-08-06 16:41:52.175 ,999,1,EraseModem,Fail,返工流程： QualSetDutOffline  Is Fail!

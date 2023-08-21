@@ -1,0 +1,2 @@
+#define BOECWH_API __declspec(dllexport)
+#define BOECWH_API __declspec(dllimport)
