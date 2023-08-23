@@ -16,6 +16,7 @@
 #include <time.h>　　//秒
 #include <sys/timeb.h> //毫秒
 #include "rapidxml_utils.hpp"
+
 #ifdef _DEBUG
 //#pragma comment(lib,"OpenXLSXd.lib")
 //#pragma comment(lib,"GetSNLib/Debug/GetSNLib.lib")
@@ -68,7 +69,6 @@ std::string join(T& val, std::string delim)
 	}
 	return str;
 }
-
 int toUnicode(const char* str)
 {
 	unsigned int seed = 131;
@@ -825,18 +825,40 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
 			break;
 		}
-		if (StationData.customInfos.find("btMEID_RULE") == StationData.customInfos.end())
+		if (StationData.customInfos.find("MEID_RULE") == StationData.customInfos.end()&& !StationData.customInfos["MEID_RULE"].Value.empty())
 		{
-			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[btMEID_RULE]配置，跳过当前测试。");
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[MEID_RULE]配置，跳过当前测试。");
 			break;
 		}
-		PhyNumInfo* phyNumInfo;
-		string btMEID_RULE = StationData.customInfos["btMEID_RULE"].Value;
-		BOE_CB_OUTLog_Default("Try To Write btMEID_RULE(" + btMEID_RULE);
-		//phyNumInfo->meid = lastResponseData.MEID.c_str();
-		resultSetFP(MetkWritePhysicalNumber(CommonParam["DUTCom"].c_str(), phyNumInfo, pHonor_callback) == 0, "写入WritePhyno");
+		if (StationData.customInfos.find("IMEI_RULE") == StationData.customInfos.end() && !StationData.customInfos["IMEI_RULE"].Value.empty())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[IMEI_RULE]配置，跳过当前测试。");
+			break;
+		}
+		BOE_CB_OUTLog_Default("Try To Write MEID:" + lastResponseData.MEID);
+		if (lastResponseData.MEID.empty())
+		{
+			resultSetEx(false, "Error:MES分配的MEID是空值.");
+			break;
+		}
+		BOE_CB_OUTLog_Default("Try To Write IMEI:" + lastResponseData.IMEI);
+		if (lastResponseData.IMEI.empty())
+		{
+			resultSetEx(false, "Error:MES分配的IMEI是空值.");
+			break;
+		}
+		
+		PhyNumInfo phyNumInfo;
+		phyNumInfo.meid_rule = atoi(StationData.customInfos["MEID_RULE"].Value.c_str());
+		phyNumInfo.imei_1_rule = atoi(StationData.customInfos["IMEI_RULE"].Value.c_str());;
+		strcpy_s(phyNumInfo.meid, lastResponseData.MEID.c_str());
+		strcpy_s(phyNumInfo.imei_1, lastResponseData.IMEI.c_str());
+
+		//strcpy_s(phyNumInfo.meid, "35731118026718");//测试
+		//strcpy_s(phyNumInfo.imei_1, "357311180267139");
+		resultSetFP(MetkWritePhysicalNumber(CommonParam["DUTCom"].c_str(), &phyNumInfo, pHonor_callback) == 0, "写入WritePhyno");
 		if (!retBool) break;
-		resultSetFP(QualCheckPhysicalNumber(CommonParam["DUTCom"].c_str(), phyNumInfo, pHonor_callback) == 0, "校验WritePhyno");
+		resultSetFP(QualCheckPhysicalNumber(CommonParam["DUTCom"].c_str(), &phyNumInfo, pHonor_callback) == 0, "校验WritePhyno");
 		if (!retBool) break;
 		break;
 	}
@@ -1295,7 +1317,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		}
 		break;
 	}
-	case U("WriteIDSAttestation"):		//53	写入锁卡表IDS_ATTESTATION字段，并校验
+	case U("WriteIDSAttestation"):		//53	写入锁卡表IDS_ATTESTATION字段，并校验 5G需要写imei
 	{
 		if (StationData.customInfos.find("IDS_ATTESTATION") == this->StationData.customInfos.end()) {
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[IDS_ATTESTATION]配置，跳过当前测试。");
@@ -2236,10 +2258,6 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			break;
 		}
 		resultSetFP(FactoryReset(CommonParam["DUTCom"].c_str(), pHonor_callback) == 0, "FactoryReset");
-		break;
-	}
-	case U("CheckHonorWallet")://M4新增1 校验荣耀钱包是否已经擦除 不测试
-	{
 		break;
 	}
 	case U("NVCheck")://M4新增2 检查射频NV是否异常
