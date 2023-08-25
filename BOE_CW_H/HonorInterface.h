@@ -124,6 +124,7 @@ int CheckPTFlag(const char* addr, void* callback);
 int ReadSoftwareVer(const char* addr, const char* stationFlag, char* softVerInfo, int size, void* callback);
 //ÐÐ 154: //typedef int CheckSoftwareVer(const char* addr, const char* excelVerInfo, void* callback);
 int ReadSDCardState(const char* addr, int& sdCardState, void* callback);
+int ReadSIMCardState(const char* addr, int& simCardState, void* callback);
 //ÐÐ 159: //typedef int CheckSDCard(const char* addr, void* callback);
 int ReadBoardId(const char* addr, char* strBoardId, int size, void* callback);
 //ÐÐ 164: //typedef int CheckBoardId(const char* addr, const char* BoardId, void* callback);

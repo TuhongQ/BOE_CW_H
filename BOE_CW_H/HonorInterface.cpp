@@ -544,7 +544,11 @@ int  ReadSDCardState(const char* addr, int& sdCardState, void* callback) {
 	pReadSDCardState ReadSDCardState_h = (pReadSDCardState)GetProcAddress(handleLibCustomizationKeyAction, "ReadSDCardState");
 	return	ReadSDCardState_h(addr, sdCardState, callback);
 }
-
+int  ReadSIMCardState(const char* addr, int& simCardState, void* callback) {
+	typedef  int  (*pReadSIMCardState)(const char* addr, int& sdCardState, void* callback);
+	pReadSIMCardState ReadSIMCardState_h = (pReadSIMCardState)GetProcAddress(handleLibCustomizationKeyAction, "ReadSIMCardState");
+	return	ReadSIMCardState_h(addr, simCardState, callback);
+}
 int  ReadBoardId(const char* addr, char* strBoardId, int size, void* callback) {
 	typedef  int  (*pReadBoardId)(const char* addr, char* strBoardId, int size, void* callback);
 	pReadBoardId ReadBoardId_h = (pReadBoardId)GetProcAddress(handleLibCustomizationKeyAction, "ReadBoardId");

@@ -907,9 +907,9 @@ struct ResponseData
 	string RKP_DATA_2;
 	string RKP_DATA_VD;
 	string MEID;
-	string IMEI;
+	string IMEI1;
 	string IMEI2;
-	string IS5G;
+	string FIVE_G;
 
 };
 AJSON(ResponseData,
@@ -951,9 +951,9 @@ AJSON(ResponseData,
     RKP_DATA_2,
     RKP_DATA_VD,
 	MEID,
-    IMEI,
+    IMEI1,
 	IMEI2,
-    IS5G
+    FIVE_G
 );
 
 #ifndef OBA

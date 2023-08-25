@@ -274,7 +274,7 @@
     <TargetName>BOE_CW_H</TargetName>
     <IncludePath>$(SolutionDir)honor\inc;$(SolutionDir)Command;$(SolutionDir)BOE_CW_H\OpenXLSX;$(SolutionDir)BOE_CW_H\libxls\include;$(SolutionDir)BOE_CW_H\cryptlib\include</IncludePath>
     <ReferencePath>$(SolutionDir)honor\lib;$(SolutionDir)Command;$(ReferencePath)</ReferencePath>
-    <OutDir>..\..\Release\CW_Release\tool\CW</OutDir>
+    <OutDir>..\..\CW_Release_offline\tool\CW</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
