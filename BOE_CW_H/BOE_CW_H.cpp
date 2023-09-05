@@ -9,13 +9,14 @@
 #include "../BOE_MES/BOE_MES.h"
 #include <thread>
 #include "INIParser.h"
-
+#include <string.h>
 #include <regex>
 #include "Tool.h"
 #include <unordered_map>
 #include <time.h>　　//秒
 #include <sys/timeb.h> //毫秒
 #include "rapidxml_utils.hpp"
+
 
 #ifdef _DEBUG
 //#pragma comment(lib,"OpenXLSXd.lib")
@@ -69,6 +70,59 @@ std::string join(T& val, std::string delim)
 	}
 	return str;
 }
+static const std::string base64_chars =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+"abcdefghijklmnopqrstuvwxyz"
+"0123456789+/";
+
+
+static inline bool is_base64(unsigned char c) {
+	return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
+std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
+	std::string ret;
+	int i = 0;
+	int j = 0;
+	unsigned char char_array_3[3];
+	unsigned char char_array_4[4];
+
+	while (in_len--) {
+		char_array_3[i++] = *(bytes_to_encode++);
+		if (i == 3) {
+			char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+			char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+			char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+			char_array_4[3] = char_array_3[2] & 0x3f;
+
+			for (i = 0; (i < 4); i++)
+				ret += base64_chars[char_array_4[i]];
+			i = 0;
+		}
+	}
+
+	if (i)
+	{
+		for (j = i; j < 3; j++)
+			char_array_3[j] = '\0';
+
+		char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+		char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+		char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+		char_array_4[3] = char_array_3[2] & 0x3f;
+
+		for (j = 0; (j < i + 1); j++)
+			ret += base64_chars[char_array_4[j]];
+
+		while ((i++ < 3))
+			ret += '=';
+
+	}
+
+	return ret;
+
+}
+
 int toUnicode(const char* str)
 {
 	unsigned int seed = 131;
@@ -597,8 +651,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		char buff[128];
 		resultSetFP(ReadBoardId(CommonParam["DUTCom"].c_str(), buff, 128, pHonor_callback) == 0, "ReadProductName");
 		if (!retBool) break;
-		//string BoardID = string(buff);
-		//vector<string> s = split(BoardID, "-");
+		//测试屏蔽 qth
 		retBool = false;
 		resultSetFP(lastResponseData.ProductName == string(buff), "Compare DUT Read_ProductName[" + string(buff) + "]" + "With MES_ProductName[" + lastResponseData.ProductName + "] ");
 		if (!retBool) {
@@ -610,7 +663,12 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("NVCheck"):					//7		NVCheck   (QualCheckNVStatus接口  nvsetmask定义不明确)
 	{
-		resultSetFP(QualCheckNVStatus(CommonParam["DUTCom"].c_str(), 0, pHonor_callback) == 0, "QualCheckNVStatus");
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
+			break;
+		}
+		resultSetFP(QualtoATCheckNVStatus(CommonParam["DUTCom"].c_str(), pHonor_callback) == 0, "QualtoATCheckNVStatus");
 		if (!retBool)break;
 		break;
 	}
@@ -754,6 +812,11 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("EraseModem"):				//18-19 判断当前手机是不是返工模式
 	{
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
+			break;
+		}
 		EraseModem(paraData, retData, errData);
 		break;
 	}
@@ -787,7 +850,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("WriteSimcardMode"): // M4新增1 写双卡模式，并校验
 	{
-		if (lastResponseData.FIVE_G.c_str() == "Y")
+		if (lastResponseData.FIVE_G != "Y")
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
 			break;
@@ -808,7 +871,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("UnSimlock")://M4新增 解锁Simlock 
 	{
-		if (lastResponseData.FIVE_G.c_str() == "Y")
+		if (lastResponseData.FIVE_G != "Y")
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
 			break;
@@ -818,42 +881,41 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		break;
 	}
 
-	case U("WritePhyno"): //M4新增3 写入MEID/IMEI 并校验 :需要确认imei获取方式 Q平台写入的接口
+	case U("WritePhyno"): //M4新增3 写入MEID/IMEI 并校验 
 	{
-		BOE_CB_OUTLog_Default("Try To Write MEID:" + lastResponseData.MEID+ lastResponseData.FIVE_G.c_str());
-		if (lastResponseData.FIVE_G.c_str() == "Y")
+		if (lastResponseData.FIVE_G != "Y")
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
 			break;
 		}
-		if (StationData.customInfos.find("MEID_RULE") == StationData.customInfos.end()&& !StationData.customInfos["MEID_RULE"].Value.empty())
+		if (StationData.customInfos.find("MEID_RULE") == StationData.customInfos.end())
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[MEID_RULE]配置，跳过当前测试。");
 			break;
 		}
-		if (StationData.customInfos.find("IMEI_RULE") == StationData.customInfos.end() && !StationData.customInfos["IMEI_RULE"].Value.empty())
+		if (StationData.customInfos.find("IMEI_RULE") == StationData.customInfos.end())
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[IMEI_RULE]配置，跳过当前测试。");
 			break;
 		}
 		BOE_CB_OUTLog_Default("Try To Write MEID:" + lastResponseData.MEID);
-		if (lastResponseData.MEID.empty())
-		{
-			resultSetEx(false, "Error:MES分配的MEID是空值.");
-			break;
-		}
 		BOE_CB_OUTLog_Default("Try To Write IMEI:" + lastResponseData.IMEI1);
 		if (lastResponseData.IMEI1.empty())
 		{
 			resultSetEx(false, "Error:MES分配的IMEI是空值.");
 			break;
 		}
-		
+
 		PhyNumInfo phyNumInfo;
 		phyNumInfo.meid_rule = atoi(StationData.customInfos["MEID_RULE"].Value.c_str());
-		phyNumInfo.imei_1_rule = atoi(StationData.customInfos["IMEI_RULE"].Value.c_str());;
+		phyNumInfo.imei_rule = atoi(StationData.customInfos["IMEI_RULE"].Value.c_str());;
+		phyNumInfo.imei_1_rule = atoi(StationData.customInfos["IMEI_1_RULE"].Value.c_str());;
 		strcpy_s(phyNumInfo.meid, lastResponseData.MEID.c_str());
-		strcpy_s(phyNumInfo.imei_1, lastResponseData.IMEI1.c_str());
+		strcpy_s(phyNumInfo.imei, lastResponseData.IMEI1.c_str());
+		if (phyNumInfo.meid_rule == 1 && phyNumInfo.imei_rule == 0)//接口问题，目前只支持单SIM卡，写MEID时IMEI需要换到imei_1
+		{
+			strcpy_s(phyNumInfo.imei_1, lastResponseData.IMEI1.c_str());
+		}
 
 		//strcpy_s(phyNumInfo.meid, "35731118026718");//测试
 		//strcpy_s(phyNumInfo.imei_1, "357311180267139");
@@ -865,7 +927,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("WriteSimlock")://M4新增5 写入SIMLOCk信息 参数: const char* cfg 配置SIMLOCK信息的表格路径，没有时，可以为nullptr,需要提供SIMLOCK表格
 	{
-		if (lastResponseData.FIVE_G.c_str() == "Y")
+		if (lastResponseData.FIVE_G != "Y")
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
 			break;
@@ -883,14 +945,14 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		}
 		string strPassword;
 		string strHash;
-		if (StationData.customInfos.find("NCK_NCKNSCKSPCKRESET") == StationData.customInfos.end()|| StationData.customInfos["NCK_NCKNSCKSPCKRESET"].Value.empty())
+		if (StationData.customInfos.find("NCK_NCKNSCKSPCKRESET") == StationData.customInfos.end() || StationData.customInfos["NCK_NCKNSCKSPCKRESET"].Value.empty())
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[NCK_NCKNSCKSPCKRESET]配置，Password默认nullptr。");
 			//strPassword = nullptr;
 		}
 		else
 			strPassword = StationData.customInfos["NCK_NCKNSCKSPCKRESET"].Value;
-		if (StationData.customInfos.find("INI_HASH") == StationData.customInfos.end()|| StationData.customInfos["INI_HASH"].Value.empty())
+		if (StationData.customInfos.find("INI_HASH") == StationData.customInfos.end() || StationData.customInfos["INI_HASH"].Value.empty())
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[INI_HASH]配置，Hash默认nullptr。");
 			//strHash = nullptr;
@@ -906,7 +968,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("WriteNV453")://M4新增6 清除NV453 : uint16_t nvid为入参，要写入的NV id 目前未知
 	{
-		if (lastResponseData.FIVE_G.c_str() == "Y")
+		if (lastResponseData.FIVE_G != "Y")
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
 			break;
@@ -932,11 +994,11 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			break;
 		}
 		//“预装清单”是mes获取的
-		if (lastResponseData.CPL_ID.empty())
-		{
-			resultSetEx(false, "Error:MES分配的CPL_ID是空值.");
-			break;
-		}
+		//if (lastResponseData.CPL_ID.empty())
+		//{
+		//	resultSetEx(false, "Error:MES分配的CPL_ID是空值.");
+		//	break;
+		//}
 		if (lastResponseData.CPL_CONTENT.empty())
 		{
 			resultSetEx(false, "Error:MES分配的CPL_CONTENT是空值.");
@@ -948,25 +1010,36 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("WriteRKP")://M4新增11 写入谷歌证书新方案
 	{
-		if (lastResponseData.FIVE_G.c_str() == "Y")
+		if (StationData.customInfos.find("RKP_DATA_1") == this->StationData.customInfos.end())
 		{
-			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_1]配置，跳过当前测试。");
+			break;
+		}
+		if (StationData.customInfos.find("RKP_DATA_2") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_2]配置，跳过当前测试。");
+			break;
+		}
+		if (StationData.customInfos.find("RKP_DATA_VD") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_VD]配置，跳过当前测试。");
 			break;
 		}
 		char rkpData[8001]{ 0 };
-		char verifyData[8001]{ 0 };
+		char verifyData[512]{ 0 };
 		char Rkp_Data_1[4001]{ 0 };
 		char Rkp_Data_2[4001]{ 0 };
 		char sp_ch = '\"', re_ch = '\'';
-		resultSetFP(GetRkpAndVdData(CommonParam["DUTCom"].c_str(), rkpData, 8000, verifyData, 8000, pHonor_callback) == 0, "GetRkpAndVdData");
+		resultSetFP(GetRkpAndVdData(CommonParam["DUTCom"].c_str(), rkpData, 8001, verifyData, 512, pHonor_callback) == 0, "GetRkpAndVdData");
 		if (!retBool) break;
+		string ostrRkp = string(rkpData);
+		BOE_CB_OUTLog_Default("orkpData is：" + ostrRkp);
 		replace_str(rkpData, sp_ch, re_ch);
 		strcat(rkpData, "EndWithTheFollowing");
 		while (strlen(rkpData) < 8000)
 		{
 			strcat(rkpData, "=");
 		}
-
 		strncpy_s(Rkp_Data_1, rkpData, 4000);
 		strncpy_s(Rkp_Data_2, rkpData + 4000, 4000);
 		string strRkp = string(rkpData);
@@ -974,6 +1047,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		string strverifyData = string(verifyData);
 		BOE_CB_OUTLog_Default("strverifyData is：" + strverifyData);
 		//上传MES
+		//string encoded = base64_encode(reinterpret_cast<const unsigned char*>(strRkp1.c_str()), strRkp1.length());
 		this->dataParam.RKP_DATA_1 = Rkp_Data_1;
 		this->dataParam.RKP_DATA_2 = Rkp_Data_2;
 		this->dataParam.RKP_DATA_VD = verifyData;
@@ -981,7 +1055,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		if (!retBool) break;
 		break;
 	}
-	case U("WriteRPMB")://M4新增12 写入RPMB
+	case U("WriteRPMB")://M4新增12 Q平台不测试的
 	{
 		if (StationData.customInfos.find("RSN") == this->StationData.customInfos.end())
 		{
@@ -1301,14 +1375,14 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		}
 		BOE_CB_OUTLog_Default("Try To Write TrustDeviceIDS:" + TrustDeviceIDS);
 		BOE_CB_OUTLog_Default("MSN:" + lastResponseData.MSN);
-		if (lastResponseData.FIVE_G.c_str() == "Y")
+		if (lastResponseData.FIVE_G != "Y")
 		{
-			resultSetFP(WriteTrustDeviceIDS(CommonParam["DUTCom"].c_str(), TrustDeviceIDS.c_str(), lastResponseData.MSN.c_str(), lastResponseData.MEID.c_str(), lastResponseData.IMEI1.c_str(), nullptr, pHonor_callback) == 0, "WriteTrustDeviceIDS");
+			resultSetFP(WriteTrustDeviceIDS(CommonParam["DUTCom"].c_str(), TrustDeviceIDS.c_str(), lastResponseData.MSN.c_str(), nullptr, nullptr, nullptr, pHonor_callback) == 0, "WriteTrustDeviceIDS");
 			if (!retBool) break;
 		}
 		else
 		{
-			resultSetFP(WriteTrustDeviceIDS(CommonParam["DUTCom"].c_str(), TrustDeviceIDS.c_str(), lastResponseData.MSN.c_str(), nullptr, nullptr, nullptr, pHonor_callback) == 0, "WriteTrustDeviceIDS");
+			resultSetFP(WriteTrustDeviceIDS(CommonParam["DUTCom"].c_str(), TrustDeviceIDS.c_str(), lastResponseData.MSN.c_str(), lastResponseData.MEID.c_str(), lastResponseData.IMEI1.c_str(), nullptr, pHonor_callback) == 0, "WriteTrustDeviceIDS");
 			if (!retBool) break;
 		}
 		break;
@@ -1325,8 +1399,16 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			break;
 		}
 		BOE_CB_OUTLog_Default("Try To Write AttestationIDS:" + AttestationIDS);
-		resultSetFP(WriteAttestationIDS(CommonParam["DUTCom"].c_str(), AttestationIDS.c_str(), lastResponseData.MSN.c_str(), nullptr, nullptr, nullptr, pHonor_callback) == 0, "WriteAttestationIDS");
-		if (!retBool) break;
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetFP(WriteAttestationIDS(CommonParam["DUTCom"].c_str(), AttestationIDS.c_str(), lastResponseData.MSN.c_str(), nullptr, nullptr, nullptr, pHonor_callback) == 0, "WriteAttestationIDS");
+			if (!retBool) break;
+		}
+		else
+		{
+			resultSetFP(WriteAttestationIDS(CommonParam["DUTCom"].c_str(), AttestationIDS.c_str(), lastResponseData.MSN.c_str(), lastResponseData.MEID.c_str(), lastResponseData.IMEI1.c_str(), nullptr, pHonor_callback) == 0, "WriteAttestationIDS");
+			if (!retBool) break;
+		}
 		break;
 	}
 	case U("WriteFuseGid"):				//54	写GID数据
@@ -1365,6 +1447,11 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("CloseQuickAccess"):			//57    关闭快速接入 指令不完整 流程描述不清楚
 	{
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
+			break;
+		}
 		// 功能: Q平台特有逻辑，写入并回读校验NV是否正确，目前支持NV453和NV60009
 		// 参数: uint16_t nvid为入参，要写入的NV id 
 		// 返回: -1 表示失败，0 表示成功
@@ -1748,7 +1835,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("CheckSIMCardNotExist"):		//11    SIM 卡不能在位 在位要拦截
 	{
-		if (lastResponseData.FIVE_G == "N") // WIFI版本 无需测试sim卡功能
+		if (lastResponseData.FIVE_G != "Y") // WIFI版本 无需测试sim卡功能
 		{
 			resultSetEx(true, "Warning:当前DUT不支持SIM卡,跳过检查。FIVE_G:" + lastResponseData.FIVE_G);
 			break;
@@ -1797,9 +1884,14 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("CheckSIMTray"):				//15    卡托在位检查
 	{
-		if (lastResponseData.SupportSD == "N") // 有NSD 即不带SD卡版本 无需测试SD卡功能
+		//if (lastResponseData.SupportSD == "N") // 有NSD 即不带SD卡版本 无需测试SD卡功能
+		//{
+		//	resultSetEx(true, "Warning:当前DUT不支持SD卡,跳过检查。SupportSD:" + lastResponseData.SupportSD);
+		//	break;
+		//}
+		if (lastResponseData.FIVE_G != "Y")
 		{
-			resultSetEx(true, "Warning:当前DUT不支持SD卡,跳过检查。SupportSD:" + lastResponseData.SupportSD);
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
 			break;
 		}
 		if (dataParam.isDGSlaveServer)
@@ -2015,11 +2107,22 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		}
 		BOE_CB_OUTLog_Default("lastResponseData.MSN:" + lastResponseData.MSN);
 		// VERIFYCUSTOMIZATION_API int  VerifyTrustDeviceIDS(const char* addr, const char* ids, const char* sn, const char* meid, const char* imei1, const char* imei2, void* callback);
-		resultSetFP(VerifyTrustDeviceIDS(CommonParam["DUTCom"].c_str(), TrustDeviceIDS.c_str(), lastResponseData.MSN.c_str(),
-			nullptr,
-			nullptr,
-			nullptr,
-			pHonor_callback) == 0, "校验TrustDeviceIDS");
+
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetFP(VerifyTrustDeviceIDS(CommonParam["DUTCom"].c_str(), TrustDeviceIDS.c_str(), lastResponseData.MSN.c_str(),
+				nullptr,
+				nullptr,
+				nullptr,
+				pHonor_callback) == 0, "校验TrustDeviceIDS");
+		}
+		else {
+			resultSetFP(VerifyTrustDeviceIDS(CommonParam["DUTCom"].c_str(), TrustDeviceIDS.c_str(), lastResponseData.MSN.c_str(),
+				lastResponseData.MEID.c_str(),
+				lastResponseData.IMEI1.c_str(),
+				nullptr,
+				pHonor_callback) == 0, "校验TrustDeviceIDS");
+		}
 		break;
 	}
 	case U("CheckIDSAttestation"):		//31	校验锁卡表IDS_ATTESTATION字段
@@ -2037,11 +2140,23 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		}
 		BOE_CB_OUTLog_Default("Target value:" + AttestationIDS);
 		// VERIFYCUSTOMIZATION_API int  VerifyAttestationIDS(const char* addr, const char* ids, const char* sn, const char* meid, const char* imei1, const char* imei2, void* callback);
-		resultSetFP(VerifyAttestationIDS(CommonParam["DUTCom"].c_str(), AttestationIDS.c_str(), lastResponseData.MSN.c_str(),
-			nullptr,
-			nullptr,
-			nullptr,
-			pHonor_callback) == 0, "检查AttestationIDS");
+
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetFP(VerifyAttestationIDS(CommonParam["DUTCom"].c_str(), AttestationIDS.c_str(), lastResponseData.MSN.c_str(),
+				nullptr,
+				nullptr,
+				nullptr,
+				pHonor_callback) == 0, "检查AttestationIDS");
+		}
+		else {
+			resultSetFP(VerifyAttestationIDS(CommonParam["DUTCom"].c_str(), AttestationIDS.c_str(), lastResponseData.MSN.c_str(),
+				lastResponseData.MEID.c_str(),
+				lastResponseData.IMEI1.c_str(),
+				nullptr,
+				pHonor_callback) == 0, "检查AttestationIDS");
+		}
+
 		break;
 	}
 	case U("CheckDeviceCerts"):			//32	校验锁卡表荣耀设备证书
@@ -2297,21 +2412,54 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("NVCheck")://M4新增2 检查射频NV是否异常
 	{
-		resultSetFP(QualCheckNVStatus(CommonParam["DUTCom"].c_str(), 0, pHonor_callback) == 0, "QualCheckNVStatus");
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
+			break;
+		}
+		resultSetFP(QualtoATCheckNVStatus(CommonParam["DUTCom"].c_str(),  pHonor_callback) == 0, "QualtoATCheckNVStatus");
 		if (!retBool)break;
-		break;
-	}
-	case U("CheckThemeColor")://M4新增3 主题颜色校验 不测试
-	{
 		break;
 	}
 	case U("CheckPhyno")://M4新增4 校验OEMinfo物理号信息
 	{
-		const PhyNumInfo* phyNumInfo;
-		resultSetFP(QualCheckPhysicalNumber(CommonParam["DUTCom"].c_str(), phyNumInfo, pHonor_callback) == 0, "校验CheckPhyno");
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
+			break;
+		}
+		if (StationData.customInfos.find("MEID_RULE") == StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[MEID_RULE]配置，跳过当前测试。");
+			break;
+		}
+		if (StationData.customInfos.find("IMEI_RULE") == StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[IMEI_RULE]配置，跳过当前测试。");
+			break;
+		}
+		BOE_CB_OUTLog_Default("Try To Check MEID:" + lastResponseData.MEID);
+		BOE_CB_OUTLog_Default("Try To Check IMEI:" + lastResponseData.IMEI1);
+		if (lastResponseData.IMEI1.empty())
+		{
+			resultSetEx(false, "Error:MES分配的IMEI是空值.");
+			break;
+		}
+		PhyNumInfo phyNumInfo;
+		phyNumInfo.meid_rule = atoi(StationData.customInfos["MEID_RULE"].Value.c_str());
+		phyNumInfo.imei_rule = atoi(StationData.customInfos["IMEI_RULE"].Value.c_str());;
+		phyNumInfo.imei_1_rule = atoi(StationData.customInfos["IMEI_1_RULE"].Value.c_str());;
+		strcpy_s(phyNumInfo.meid, lastResponseData.MEID.c_str());
+		strcpy_s(phyNumInfo.imei, lastResponseData.IMEI1.c_str());
+		if (phyNumInfo.meid_rule == 1 && phyNumInfo.imei_rule == 0)//接口问题，目前只支持单SIM卡，写MEID时IMEI需要换到imei_1
+		{
+			strcpy_s(phyNumInfo.imei_1, lastResponseData.IMEI1.c_str());
+		}
+		resultSetFP(QualCheckPhysicalNumber(CommonParam["DUTCom"].c_str(), &phyNumInfo, pHonor_callback) == 0, "CheckPhyno");
 		if (!retBool) break;
+		break;
 	}
-	case U("CheckSimlock")://M4新增5 校验SIMLock信息
+	case U("CheckSimlock")://M4新增5 校验SIMLock信息 暂未启用
 	{
 		string strPassword;
 		string strHash;
@@ -2335,6 +2483,11 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("CheckSimcardMode")://M4新增6 校验单双卡模式
 	{
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
+			break;
+		}
 		if (StationData.customInfos.find("SIMCARD_MODE") == StationData.customInfos.end())
 		{
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[SIMCARD_MODE]配置，跳过当前测试。");
@@ -2347,28 +2500,24 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		break;
 
 	}
-	case U("WriteSIMICCID")://M4新增7 读取并上传SIM_ICCID 不测试
-	{
-		break;
-	}
-	case U("CheckESIM")://M4新增8 校验ESim功能 不测试
-	{
-		break;
-	}
-	case U("CheckSecFlash")://M4新增9 校验安全芯片存储方案 不测试
-	{
-		break;
-	}
-	case U("CheckNfcInfo")://M4新增10 校验NFC信息擦除结果 不测试
-	{
-		break;
-	}
-	case U("CheckCPL")://M4新增11 校验CPL信息
-	{
-		break;
-	}
+
 	case U("CheckRKP")://M4新增12 校验RKP（谷歌证书新方案）
 	{
+		if (StationData.customInfos.find("RKP_DATA_VD") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_VD]配置，跳过当前测试。");
+			break;
+		}
+		if (lastResponseData.RKP_DATA_VD.empty())
+		{
+			resultSetEx(false, "Error:MES分配的RKP_DATA_VD是空值.");
+			break;
+		}
+		char verifyData[512]{ 0 };
+		BOE_CB_OUTLog_Default("MES_RKP_DATA_VD is：" + lastResponseData.RKP_DATA_VD);
+		strcpy_s(verifyData, lastResponseData.RKP_DATA_VD.c_str());
+		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");
+		if (!retBool) break;
 		break;
 	}
 #ifdef OBA
@@ -2595,7 +2744,7 @@ bool BOE_CW::initParam()
 	if (!StationData.IsPostFailToMes)
 	{
 		BOE_CB_MessageBoxData("当前FAIL不上传MES，请确认处于调试状态而非生产环境。", "Warning", "Warning");
-}
+	}
 #ifdef MC
 	StationData.timeOut = iniParser.GetInt("TestParam", "TimeOut", 15);
 #endif // MC
@@ -2776,12 +2925,12 @@ void BOE_CW::CheckBarcode(ParamData paraData, RetData& retData, ErrData& errData
 	BOE_CB_OUTLog_DefaultAndShowInfo("读取单板SN...");
 	// 读取BarCode
 	char buff[128]{ 0 };
-	//resultSetFP(ReadBarcode(CommonParam["DUTCom"].c_str(), buff, 128, pHonor_callback) == 0, "读取单板SN");
-	//if (!retBool) {
-	//	BOE_CB_OUTLog_DefaultAndShowInfo("Error:读取单板SN失败");
-	//	return;
-	//}
-	strcpy(buff, "AKURUN236GH01813");//测试直接赋值
+	resultSetFP(ReadBarcode(CommonParam["DUTCom"].c_str(), buff, 128, pHonor_callback) == 0, "读取单板SN");
+	if (!retBool) {
+		BOE_CB_OUTLog_DefaultAndShowInfo("Error:读取单板SN失败");
+		return;
+	}
+	//strcpy(buff, "0203UN2383H00020"); //测试直接赋值qth
 	string readBarcode(buff);
 	BOE_CB_OUTLog_DefaultAndShowInfo("Read BSN:" + readBarcode + ".");
 	BOE_CB_SN(buff);
@@ -3325,7 +3474,7 @@ bool BOE_CW::getMesDataAndCheck(string Barcode, string& err)
 #pragma endregion
 #pragma region 锁卡表校验
 	BOE_CB_OUTLog_DefaultAndShowInfo("测试跳过锁卡表校验...");
-	return true;//测试跳过校验qth
+	//return true;//测试跳过校验qth
 
 	BOE_CB_OUTLog_DefaultAndShowInfo("锁卡表校验...");
 	//CW站校验本地锁卡表，MC站不校验本地锁卡表
@@ -3551,6 +3700,7 @@ bool BOE_CW::MesPostPass()
 
 bool BOE_CW::MesPostFail(string BugCode, string ErrorMsg)
 {
+	//return true;//测试屏蔽 qth
 	PostData postData;
 #ifndef OBA
 	postData.AteName = "";

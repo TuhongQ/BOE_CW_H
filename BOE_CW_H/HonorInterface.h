@@ -52,7 +52,7 @@ int  VerifySimcardMode(const char* addr, const char* val, void* callback);
 int  WriteSimcardMode(const char* addr, void* dog, int keyID, const char* vendor, bool isQualPlat, void* callback);
 int  MetkCheckNVChecksum(const char* addr, void* callback);
 int  MetkCheckNVStatus(const char* addr, void* callback);
-int  QualCheckNVStatus(const char* addr, int nvsetmask, void* callback);
+int QualtoATCheckNVStatus(const char* addr, void* callback);
 void* CreateSafeDog(void* callback);
 void* DestroySafeDog(void* dog);
 long GetNetDogRemainDays(void* dog);

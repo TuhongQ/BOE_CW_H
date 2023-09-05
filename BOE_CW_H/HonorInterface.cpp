@@ -76,11 +76,11 @@ int  MetkCheckNVStatus(const char* addr, void* callback)
 	return MetkCheckNVStatus_h(addr, callback);
 }
 
-int QualCheckNVStatus(const char* addr, int nvsetmask, void* callback)
+int QualtoATCheckNVStatus(const char* addr, void* callback)
 {
-	typedef int (*pQualCheckNVStatus)(const char* addr, int nvsetmask, void* callback);
-	static pQualCheckNVStatus QualCheckNVStatus_h = (pQualCheckNVStatus)GetProcAddress(handleLibMetkCheckNV, "QualCheckNVStatus");
-	return QualCheckNVStatus_h(addr, nvsetmask, callback);
+	typedef int (*pQualtoATCheckNVStatus)(const char* addr, void* callback);
+	static pQualtoATCheckNVStatus QualtoATCheckNVStatus_h = (pQualtoATCheckNVStatus)GetProcAddress(handleLibMetkCheckNV, "QualtoATCheckNVStatus");
+	return QualtoATCheckNVStatus_h(addr, callback);
 }
 void* DestroySafeDog(void* dog)
 {
@@ -414,7 +414,7 @@ int  WriteRSN(const char* addr, const char* val, void* callback) {
 
 int  WriteCPL(const char* addr, const char* cpl, void* callback) {
 	typedef  int  (*pWriteCPL)(const char* addr, const char* val, void* callback);
-	pWriteCPL WriteCPL_h = (pWriteCPL)GetProcAddress(handleLibCreateCustomization, "WriteCPL");
+	pWriteCPL WriteCPL_h = (pWriteCPL)GetProcAddress(handleLibWriteCustomization, "WriteCPL");
 	return	WriteCPL_h(addr, cpl, callback);
 }
 int  WriteSecretType(const char* addr, const char* val, void* callback) {
