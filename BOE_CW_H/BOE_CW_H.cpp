@@ -70,59 +70,6 @@ std::string join(T& val, std::string delim)
 	}
 	return str;
 }
-static const std::string base64_chars =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-"abcdefghijklmnopqrstuvwxyz"
-"0123456789+/";
-
-
-static inline bool is_base64(unsigned char c) {
-	return (isalnum(c) || (c == '+') || (c == '/'));
-}
-
-std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
-	std::string ret;
-	int i = 0;
-	int j = 0;
-	unsigned char char_array_3[3];
-	unsigned char char_array_4[4];
-
-	while (in_len--) {
-		char_array_3[i++] = *(bytes_to_encode++);
-		if (i == 3) {
-			char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-			char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-			char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-			char_array_4[3] = char_array_3[2] & 0x3f;
-
-			for (i = 0; (i < 4); i++)
-				ret += base64_chars[char_array_4[i]];
-			i = 0;
-		}
-	}
-
-	if (i)
-	{
-		for (j = i; j < 3; j++)
-			char_array_3[j] = '\0';
-
-		char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-		char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-		char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-		char_array_4[3] = char_array_3[2] & 0x3f;
-
-		for (j = 0; (j < i + 1); j++)
-			ret += base64_chars[char_array_4[j]];
-
-		while ((i++ < 3))
-			ret += '=';
-
-	}
-
-	return ret;
-
-}
-
 int toUnicode(const char* str)
 {
 	unsigned int seed = 131;
@@ -898,8 +845,10 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[IMEI_RULE]配置，跳过当前测试。");
 			break;
 		}
-		BOE_CB_OUTLog_Default("Try To Write MEID:" + lastResponseData.MEID);
-		BOE_CB_OUTLog_Default("Try To Write IMEI:" + lastResponseData.IMEI1);
+		BOE_CB_OUTLog_Default("Try To Write MEID:" + lastResponseData.MEID + "\r\n");
+		//BOE_CB_OUTLog_Default("IMEI length is:" + lastResponseData.IMEI1.length());
+
+		BOE_CB_OUTLog_Default("Try To Write IMEI:" + lastResponseData.IMEI1 + "\r\n");
 		if (lastResponseData.IMEI1.empty())
 		{
 			resultSetEx(false, "Error:MES分配的IMEI是空值.");
@@ -1008,7 +957,34 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		resultSet(WriteCPL(CommonParam["DUTCom"].c_str(), lastResponseData.CPL_CONTENT.c_str(), pHonor_callback) == 0);
 		break;
 	}
-	case U("WriteRKP")://M4新增11 写入谷歌证书新方案
+	case U("WriteRunMode")://写新型入网证
+	{
+		//if (StationData.customInfos.find("SPECIAL_DATA_SWITCH") == this->StationData.customInfos.end())
+		//{
+		//	resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[SPECIAL_DATA_SWITCH]配置，跳过当前测试。");
+		//	break;
+		//}
+		//string SPECIAL_DATA_SWITCH = StationData.customInfos["SPECIAL_DATA_SWITCH"].Value;
+		//if (!DataCalute((char*)SPECIAL_DATA_SWITCH.c_str(), 8))
+		//{
+		//	resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; SPECIAL_DATA_SWITCH[" + SPECIAL_DATA_SWITCH + "].Don't need to write value!");
+		//	break;
+		//}
+		//string xx = lastResponseData.Scramble;
+		//string xx2 = lastResponseData.ModelCode;
+		string xx = "238498";
+		string xx2 = "1384A1P1C238C48";
+		string xx3 = xx.append(xx2);
+		string strHH=binaryToHex(xx3);
+		BOE_CB_OUTLog_Default("xxxx is：" + strHH);
+		
+		resultSetFP(WriteSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHH.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "WriteSignDataFunc");
+		if (!retBool) break;
+		resultSetFP(CheckSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHH.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "CheckSignDataFunc");
+		if (!retBool) break;
+		break;
+	}
+	case U("FristWriteRKP")://M4新增11 写入谷歌证书新方案
 	{
 		if (StationData.customInfos.find("RKP_DATA_1") == this->StationData.customInfos.end())
 		{
@@ -1047,7 +1023,72 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		string strverifyData = string(verifyData);
 		BOE_CB_OUTLog_Default("strverifyData is：" + strverifyData);
 		//上传MES
-		//string encoded = base64_encode(reinterpret_cast<const unsigned char*>(strRkp1.c_str()), strRkp1.length());
+		this->dataParam.RKP_DATA_1 = Rkp_Data_1;
+		this->dataParam.RKP_DATA_2 = Rkp_Data_2;
+		this->dataParam.RKP_DATA_VD = verifyData;
+		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");
+		if (!retBool) break;
+		break;
+	}
+	case U("WriteRKP")://M4新增11 写入谷歌证书新方案
+	{
+		if (StationData.customInfos.find("RKP_DATA_1") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_1]配置，跳过当前测试。");
+			break;
+		}
+		if (StationData.customInfos.find("RKP_DATA_2") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_2]配置，跳过当前测试。");
+			break;
+		}
+		if (StationData.customInfos.find("RKP_DATA_VD") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_VD]配置，跳过当前测试。");
+			break;
+		}
+
+		resultSetFP(FactoryResetCW(CommonParam["DUTCom"].c_str(), pHonor_callback) == 0, "FactoryReset");
+		if (!retBool)
+		{
+			ErrorMsg = "恢复出厂设置失败";
+		}
+		auto hasPort = false;
+		int count = 30;
+		BOE_CB_ShowInfo("Wait For DUT Port(等待获取设备端口)...");
+		Sleep(50000);
+		while (!hasPort && count)
+		{
+			hasPort = TestDutAddr(CommonParam["DUTCom"]);
+			count--;
+		}
+		resultSetFP(hasPort, "获取DUT端口");
+		BOE_CB_ShowInfo("Wait For DUT Port(等待获取重启完成)...");
+		Sleep(40000);
+		BOE_CB_ShowInfo("Wait For DUT Port(等待获取重启完成)...");
+		Sleep(30000);
+		char rkpData[8001]{ 0 };
+		char verifyData[512]{ 0 };
+		char Rkp_Data_1[4001]{ 0 };
+		char Rkp_Data_2[4001]{ 0 };
+		char sp_ch = '\"', re_ch = '\'';
+		resultSetFP(GetRkpAndVdData(CommonParam["DUTCom"].c_str(), rkpData, 8001, verifyData, 512, pHonor_callback) == 0, "GetRkpAndVdData");
+		if (!retBool) break;
+		string ostrRkp = string(rkpData);
+		BOE_CB_OUTLog_Default("orkpData is：" + ostrRkp);
+		replace_str(rkpData, sp_ch, re_ch);
+		strcat(rkpData, "EndWithTheFollowing");
+		while (strlen(rkpData) < 8000)
+		{
+			strcat(rkpData, "=");
+		}
+		strncpy_s(Rkp_Data_1, rkpData, 4000);
+		strncpy_s(Rkp_Data_2, rkpData + 4000, 4000);
+		string strRkp = string(rkpData);
+		BOE_CB_OUTLog_Default("rkpData is：" + strRkp);
+		string strverifyData = string(verifyData);
+		BOE_CB_OUTLog_Default("strverifyData is：" + strverifyData);
+		//上传MES
 		this->dataParam.RKP_DATA_1 = Rkp_Data_1;
 		this->dataParam.RKP_DATA_2 = Rkp_Data_2;
 		this->dataParam.RKP_DATA_VD = verifyData;
@@ -3473,7 +3514,7 @@ bool BOE_CW::getMesDataAndCheck(string Barcode, string& err)
 	}
 #pragma endregion
 #pragma region 锁卡表校验
-	BOE_CB_OUTLog_DefaultAndShowInfo("测试跳过锁卡表校验...");
+	//BOE_CB_OUTLog_DefaultAndShowInfo("测试跳过锁卡表校验...");
 	//return true;//测试跳过校验qth
 
 	BOE_CB_OUTLog_DefaultAndShowInfo("锁卡表校验...");

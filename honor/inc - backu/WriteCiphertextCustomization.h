@@ -120,6 +120,36 @@ WRITECIPHERTEXTCUSTOMIZATION_API int WriteAUTHEN(const char* addr, void* dog, in
 // 返回: -1 表示失败，0 表示成功
 WRITECIPHERTEXTCUSTOMIZATION_API int  WriteRunMode(const char* addr, void* dog, int keyID, const char* val, void* callback);
 
+// 功能: 写入keybox信息
+// 参数: void* dog libBaseSafedog.dll提供的网络加密狗接口返回的加密狗指针
+// 参数: int keyID AP鉴权接口返回的数据解密ID，为第4组ID值
+// 参数：const char* widevineDRMKey 入参，keybox的原始字符串信息
+// 参数：const char* widevineKeyCRC 入参，keybox原始字符串的CRC值
+// 返回: -1 表示失败，0 表示成功
+WRITECIPHERTEXTCUSTOMIZATION_API int WriteKeyBox(const char* addr, void* dog, int keyID, const char* widevineDRMKey, const char* widevineKeyCRC, bool isQualPlat, void* callback);
+
+// 功能: 校验keybox数据信息
+// 参数: void* dog libBaseSafedog.dll提供的网络加密狗接口返回的加密狗指针
+// 参数: int keyID AP鉴权接口返回的数据解密ID，为第4组ID值
+// 参数：const char* widevineDRMKey 入参，keybox的原始字符串信息
+// 参数：const char* widevineKeyCRC 入参，keybox原始字符串的CRC值
+// 返回: -1 表示失败，0 表示成功
+WRITECIPHERTEXTCUSTOMIZATION_API int CheckKeyBox(const char* addr, void* dog, int keyID, const char* widevineDRMKey, const char* widevineKeyCRC, bool isQualPlat, void* callback);
+
+// 功能: 写入产线场景参数，包含：无线自启动参数，MMI2自启动参数等
+// 参数：const char* sceneName,产线场景名称，无线自启动参数：WIRELESSUPDATE；MMI2自启动参数：AUTOMMI2；
+// 参数: const char* scenePara,场景参数明文信息：
+// 1、无线自启动场景：APK建立wifi连接时的路由器配置参数，举例：ssid:HN_BD_CABINET1_ROUTER2_5;password:hihonor123;cw2Ip:192.168.1.100;
+// 2、MMI2自启动场景：无业务参数时固定为字符串 NONE；
+// 参数：const char* sceneInfo，取值：ONCE(仅自启动一次，手机重启标志位失效)/FORVER(永久生效，如果需要删除该标志位，需要专门执行擦除指令AT^FACENVPARACFG =ERASE)
+// 参数: void* dog libBaseSafedog.dll提供的网络加密狗接口返回的加密狗指针
+// 返回: -1 表示失败，0 表示成功
+WRITECIPHERTEXTCUSTOMIZATION_API int WriteFacEnvParacfg(const char* addr, void* dog, int keyID, const char* sceneName, const char* scenePara, const char* sceneInfo, void* callback);
+
+// 功能: 写入MMI标志位
+// 参数: const char* val, 要写入的MMI标志位信息
+// 返回: -1 表示失败，0 表示成功
+WRITECIPHERTEXTCUSTOMIZATION_API int WriteMMIFlag(const char* addr, void* dog, int keyID, const char* val, bool isQualPlat, void* callback);
 
 #ifdef __cplusplus 
 } 

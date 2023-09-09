@@ -72,6 +72,26 @@ WRITECUSTOMIZATION_API int  WriteKeyAttestation(const char* addr, const char* ke
 // 返回: -1 表示失败，0 表示成功
 WRITECUSTOMIZATION_API int  WriteAttestationIDS(const char* addr, const char* ids, const char* sn, const char* meid, const char* imei1, const char* imei2, void* callback);
 
+// 功能: 写入锁卡表 HTEE RSN 字段，即 TEE RPMB 分区初始化
+// 参数: const char* val 锁卡表中的定制字段原始值，RSN字段内容取值范围1,2,3；bit0为1表示支持QTEE，bit1为1表示支持HTEE
+// 返回: -1 表示失败，0 表示成功
+WRITECUSTOMIZATION_API int  WriteTEERPMB(const char* addr, const char* val, void* callback);
+
+// 功能: 产线操作初始化安全存储芯片
+// 参数: const char* mode 表示操作安全存储芯片的操作模式
+// 入参mode取值：init(升级版本作用为检查安全芯片是否完成初始化)、set_urs(用于设置安全芯片状态为URS状态，设置成功后安全芯片不能再次被初始化)、check_urs(用于检查安全芯片状态是否已经切换为URS状态）
+// 返回: -1 表示失败，0 表示成功
+WRITECUSTOMIZATION_API int  WriteSecFlash(const char* addr, const char* mode, void* callback);
+
+// 功能: 写入锁卡表 THEMECOLOR 字段，只支持DeviceColor(BACK、MID、FRONT)颜色
+// 参数: const char* deviceColor 锁卡表定制字段中DeviceColor(BACK、MID、FRONT)颜色的原始值
+// 返回: -1 表示失败，0 表示成功
+WRITECUSTOMIZATION_API int  WriteDeviceColor(const char* addr, const char* deviceColor, void* callback);
+
+// 功能: 写入CPL信息
+// 参数: const char* cpl CPL(Cancel Preload List) 取消预装清单
+// 返回: -1 表示失败，0 表示成功
+WRITECUSTOMIZATION_API int  WriteCPL(const char* addr, const char* cpl, void* callback);
 #ifdef __cplusplus 
 } 
 #endif // _cplusplus

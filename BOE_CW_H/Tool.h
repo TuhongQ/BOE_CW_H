@@ -561,7 +561,25 @@ std::string UTF8_To_string(const std::string& str)
 
 	return retStr;
 }
+string binaryToHex(const string& binaryStr)
+{
+	string ret;
+	static const char* hex = "0123456789ABCDEF";
+	for (auto c : binaryStr)
+	{
+		ret.push_back(hex[(c >> 4) & 0xf]); //取二进制高四位
+		ret.push_back(hex[c & 0xf]);        //取二进制低四位
+	}
+	return ret;
+}
 
+
+int main()
+{
+	std::cout << binaryToHex("0").c_str() << std::endl;
+	getchar();
+	return 0;
+}
 std::string string_To_UTF8(const std::string& str)
 {
 	int nwLen = ::MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
@@ -910,6 +928,8 @@ struct ResponseData
 	string IMEI1;
 	string IMEI2;
 	string FIVE_G;
+	string ModelCode;
+	string Scramble;
 
 };
 AJSON(ResponseData,
@@ -953,7 +973,10 @@ AJSON(ResponseData,
 	MEID,
     IMEI1,
 	IMEI2,
-    FIVE_G
+    FIVE_G,
+	ModelCode,
+	Scramble
+	
 );
 
 #ifndef OBA

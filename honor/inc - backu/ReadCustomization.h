@@ -61,6 +61,10 @@ READCUSTOMIZATION_API int  ReadBarcode(const char* addr, char* buff, int size, v
 // 返回: -1 表示失败，0 表示成功
 READCUSTOMIZATION_API int  ReadRunMode(const char* addr, char* buff, int size, void* callback);
 
+// 功能: 读取USB正反插，判断CC接触状态
+// 返回: -1 表示失败，0 表示成功
+READCUSTOMIZATION_API int  ReadTypecStatus(const char* addr, void* callback);
+
 
 #ifdef __cplusplus 
 } 

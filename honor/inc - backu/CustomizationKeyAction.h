@@ -256,9 +256,61 @@ CUSTOMIZATIONKEYACTION_API int StopAutoCharge(const char* addr, void* callback);
 // 返回: -1 表示失败，0 表示成功
 CUSTOMIZATIONKEYACTION_API int StartAutoCharge(const char* addr, void* callback);
 
-// 功能: 检查当前sim卡，是否不在位
+// 功能: 检查当前sim卡，是否不在位：适用于Q平台，diag指令
 // 返回: -1 表示失败，0 表示成功
-CUSTOMIZATIONKEYACTION_API int  CkeckSimCard(const char* addr, void* callback);
+CUSTOMIZATIONKEYACTION_API int  CheckSimCard(const char* addr, void* callback);
+
+// 功能: Q平台diag切换AT使用：读取SIM卡状态 获取SIM卡在位或者不在位的状态
+// 参数  simCardState 为出参， 表示SIM卡状态：0:2个SIM卡均不在位   1:至少有1个SIM卡在位   2:“NOT_READY”等异常情况
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int  ReadSIMCardState(const char* addr, int& simCardState, void* callback);
+
+// 功能: 电池防伪功能使用：检查电池是否激活，CW/MC工位均执行；AT指令，Q/M平台通用
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int  CheckBattCTInfo(const char* addr, void* callback);
+
+// 功能: 电池防伪功能使用：检查电池类型是否为非备件，CW工位执行；AT指令，Q/M平台通用
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int  CheckBattCTType(const char* addr, void* callback);
+
+// 功能: 电池防伪功能使用：设置新主板标志，计时清零，MC工位执行；AT指令，Q/M平台通用
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int  SetBattCTTimer(const char* addr, void* callback);
+
+// 功能: 大小包合一升级指令
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int  SDUpdateTogether(const char* addr, const char* productname, const char* vendor, const char* country, void* callback);
+
+// 功能: 新modem重启方案：设置modem上电或下电
+// 参数：mode，该字段值为STOP（modem下电）或者START（modem上电）
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int SetModemStatus(const char* addr, const char* mode, void* callback);
+
+// 功能: 新modem重启方案：获取modem运行状态
+// 参数：mode，该字段值为OFFLINE（查询是否是OFFLINE模式，即下电后状态）或者RUNNING（查询是否是RUNNING模式，即上电后状态）
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int GetModemStatus(const char* addr, const char* mode, void* callback);
+
+// 功能: 擦除钱包信息
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int EraseWalletInfo(const char* addr, void* callback);
+
+// 功能: 检查钱包信息擦除结果
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int CheckWalletInfo(const char* addr, void* callback);
+
+// 功能: 擦除NFC信息
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int EraseNfcInfo(const char* addr, void* callback);
+
+// 功能: 检查NFC信息擦除结果
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int CheckNfcInfo(const char* addr, void* callback);
+
+// 功能: 拦截NFC故障
+// 参数：errCode 返回错误码
+// 返回: -1 表示失败，0 表示成功
+CUSTOMIZATIONKEYACTION_API int CheckEaInfo(const char* addr, int &errCode, void* callback);
 #ifdef __cplusplus 
 } 
 #endif // _cplusplus

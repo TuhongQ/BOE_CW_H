@@ -59,6 +59,11 @@ VERIFYCUSTOMIZATION_API int  VerifyDeviceCerts(const char* addr, const char* cer
 // 返回: -1 表示失败，0 表示成功
 VERIFYCUSTOMIZATION_API int  VerifyMarketingName(const char* addr, const char* val, void* callback);
 
+// 功能: 擦除 MARKETING_NAME 字段
+// 参数: const char* val 锁卡表中的定制字段原始值
+// 返回: -1 表示失败，0 表示成功
+VERIFYCUSTOMIZATION_API int  ClearMarketingName(const char* addr, void* callback);
+
 // 功能: 校验锁卡表 BENCHMARKFLAG 字段，即防跑分标志位
 // 参数: const char* val 锁卡表中的定制字段原始值
 // 返回: -1 表示失败，0 表示成功
@@ -149,6 +154,20 @@ VERIFYCUSTOMIZATION_API int  VerifyAttestationIDS(const char* addr, const char* 
 // 返回: -1 表示失败，0 表示成功
 VERIFYCUSTOMIZATION_API int  VerifyKeyAttestation(const char* addr, const char* keyVD, void* callback);
 
+// 功能: 校验锁卡表 RSN 字段，检查 TEE RPMB 分区初始化是否成功
+// 参数: const char* val 锁卡表中的定制字段原始值，RSN字段内容取值范围1,2,3；bit0为1表示支持QTEE，bit1为1表示支持HTEE
+// 返回: -1 表示失败，0 表示成功
+VERIFYCUSTOMIZATION_API int  VerifyTEERPMB(const char* addr, const char* val, void* callback);
+
+// 功能: 校验锁卡表 THEMECOLOR 字段，只支持DeviceColor(BACK、MID、FRONT)颜色
+// 参数: const char* deviceColor 锁卡表中的定制字段原始值，DeviceColor(BACK、MID、FRONT)颜色
+// 返回: -1 表示失败，0 表示成功
+VERIFYCUSTOMIZATION_API int  VerifyDeviceColor(const char* addr, const char* deviceColor, void* callback);
+
+// 功能: 校验CPL信息
+// 参数: const char* cpl CPL(Cancel Preload List) 取消预装清单
+// 返回: -1 表示失败，0 表示成功
+VERIFYCUSTOMIZATION_API int  VerifyCPL(const char* addr, const char* cpl, void* callback);
 #ifdef __cplusplus 
 } 
 #endif // _cplusplus

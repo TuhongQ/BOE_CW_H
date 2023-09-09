@@ -146,10 +146,37 @@ WRITECIPHERTEXTCUSTOMIZATION_API int CheckKeyBox(const char* addr, void* dog, in
 // 返回: -1 表示失败，0 表示成功
 WRITECIPHERTEXTCUSTOMIZATION_API int WriteFacEnvParacfg(const char* addr, void* dog, int keyID, const char* sceneName, const char* scenePara, const char* sceneInfo, void* callback);
 
+// 功能: 擦除无线升级方案APK自启动参数
+// 返回: -1 表示失败，0 表示成功
+WRITECIPHERTEXTCUSTOMIZATION_API int EraseWLUpdatePara(const char* addr, void* callback);
+
+// 功能: 写入允许APK安装标志位
+// 参数: void* dog libBaseSafedog.dll提供的网络加密狗接口返回的加密狗指针
+// 返回: -1 表示失败，0 表示成功
+WRITECIPHERTEXTCUSTOMIZATION_API int WriteAllowApkInstall(const char* addr, void* dog, int keyID, bool isQualPlat, void* callback);
+
 // 功能: 写入MMI标志位
 // 参数: const char* val, 要写入的MMI标志位信息
 // 返回: -1 表示失败，0 表示成功
 WRITECIPHERTEXTCUSTOMIZATION_API int WriteMMIFlag(const char* addr, void* dog, int keyID, const char* val, bool isQualPlat, void* callback);
+
+// 功能: 写FacSign数据通用接口
+// 参数: const char* val 任务令中提供的写入内容；注意电子入网证场景，必须是E_NETWORK+扰码再转换成16进制字符串格式，举例：2384981384A1P1C238C48，转换成323338343938313338344131503143323338433438写入
+// 参数: const char* signType 数据签名类型，目前有2种参数：2048加密狗类型：RSA2048_SHA256_PSS，3072加密狗类型：RSA3072_SHA256_PSS
+// 参数: const char* signTag 数据Tag标志，具体入参如下：
+// ------写UDID：UDID；整机条码：SN；单板条码：BSN；蓝牙地址：MACBT；WIFI地址：MACWLAN；签名授权：AUTHEN(true)；电子入网证：NAL
+// ------可替代如下函数接口：WriteUDID-UDID  WriteSN-SN WriteBarcode-BSN WriteBTMAC-MACBT  WriteWifiMAC-MACWLAN WriteAUTHEN-AUTHEN(true)  WriteRunMode-RUNMODE
+// 参数: void* dog libBaseSafedog.dll提供的网络加密狗接口返回的加密狗指针
+// 返回: -1 表示失败，0 表示成功
+WRITECIPHERTEXTCUSTOMIZATION_API int WriteSignDataFunc(const char* addr, void* dog, int keyID, const char* val, const char* signType, const char* signTag, bool isQualPlat, void* callback);
+
+// 功能: 回读FacSign数据通用接口
+// 参数: const char* val 任务令中提供的校验内容
+// 参数: const char* signType 数据签名类型
+// 参数: const char* signTag 数据Tag标志
+// 参数: void* dog libBaseSafedog.dll提供的网络加密狗接口返回的加密狗指针
+// 返回: -1 表示失败，0 表示成功
+WRITECIPHERTEXTCUSTOMIZATION_API int CheckSignDataFunc(const char* addr, void* dog, int keyID, const char* val, const char* signType, const char* signTag, bool isQualPlat, void* callback);
 
 #ifdef __cplusplus 
 } 

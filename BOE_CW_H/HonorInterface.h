@@ -78,6 +78,8 @@ int WriteFrpKey(const char* addr, void* dog, int keyID, const char* val, bool is
 int WriteFuseGid(const char* addr, void* dog, const char* chipid, void* callback);
 int CheckFuseGid(const char* addr, void* dog, const char* chipid, void* callback);
 int WriteBarcode(const char* addr, void* dog, int keyID, const char* val, bool isQualPlat, void* callback);
+int WriteSignDataFunc(const char* addr, void* dog, int keyID, const char* val, const char* signType, const char* signTag, bool isQualPlat, void* callback);
+int CheckSignDataFunc(const char* addr, void* dog, int keyID, const char* val, const char* signType, const char* signTag, bool isQualPlat, void* callback);
 //ÐÐ 59: //typedef int VerifySN(const char* addr, const char* val, void* callback);
 int VerifyQfuseRegisterData(const char* addr, const char* val, void* callback);
 //ÐÐ 64: //typedef int VerifyUDID(const char* addr, const char* val, void* callback);

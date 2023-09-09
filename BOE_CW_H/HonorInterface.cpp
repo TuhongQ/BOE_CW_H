@@ -273,6 +273,16 @@ int  WriteBarcode(const char* addr, void* dog, int keyID, const char* val, bool 
 	pWriteBarcode WriteBarcode_h = (pWriteBarcode)GetProcAddress(handleLibWriteCiphertextCustomization, "WriteBarcode");
 	return	WriteBarcode_h(addr, dog, keyID, val, isQualPlat, callback);
 }
+int WriteSignDataFunc(const char* addr, void* dog, int keyID, const char* val, const char* signType, const char* signTag, bool isQualPlat, void* callback) {
+	typedef  int  (*pWriteSignDataFunc)(const char* addr, void* dog, int keyID, const char* val, const char* signType, const char* signTag, bool isQualPlat, void* callback);
+	pWriteSignDataFunc WriteSignDataFunc_h = (pWriteSignDataFunc)GetProcAddress(handleLibWriteCiphertextCustomization, "WriteSignDataFunc");
+	return	WriteSignDataFunc_h(addr, dog, keyID, val, signType, signTag, isQualPlat, callback);
+}
+int CheckSignDataFunc(const char* addr, void* dog, int keyID, const char* val, const char* signType, const char* signTag, bool isQualPlat, void* callback) {
+	typedef  int  (*pCheckSignDataFunc)(const char* addr, void* dog, int keyID, const char* val, const char* signType, const char* signTag, bool isQualPlat, void* callback);
+	pCheckSignDataFunc CheckSignDataFunc_h = (pCheckSignDataFunc)GetProcAddress(handleLibWriteCiphertextCustomization, "WriteSignDataFunc");
+	return	CheckSignDataFunc_h(addr, dog, keyID, val, signType, signTag, isQualPlat, callback);
+}
 
 int  VerifyQfuseRegisterData(const char* addr, const char* val, void* callback) {
 	typedef  int  (*pVerifyQfuseRegisterData)(const char* addr, const char* val, void* callback);
