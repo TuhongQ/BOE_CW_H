@@ -34,14 +34,14 @@ bool BOE_Common_Request(char* reqJson, char* retJson, char* strErr)
 	if (retBool) {
 		//System::Console::WriteLine("BOE_Common_Request ret:" + ret);
 		auto stdString = msclr::interop::marshal_as<std::string>(ret);
-		strcpy_s(retJson, stdString.length()+1, stdString.c_str());
+		strcpy_s(retJson, stdString.length() + 1, stdString.c_str());
 		//strcpy(retJson, stdString.c_str());
 		//std::cout <<__FUNCTION__<<"-->>retJson:" << retJson;
 	}
 	else {
 		//System::Console::WriteLine("BOE_Common_Request err:" + err);
 		auto stdString = msclr::interop::marshal_as<std::string>(err);
-		strcpy_s(strErr, stdString.length()+1, stdString.c_str());
+		strcpy_s(strErr, stdString.length() + 1, stdString.c_str());
 		/*strcpy(strErr, stdString.c_str());*/
 	}
 	return retBool;
@@ -70,6 +70,44 @@ bool BOE_Common_Post(char* subJson, char* retJson, char* strErr)
 	{
 		retBool = MES->BOE_Data_Out(sub, err);
 	}
+	if (retBool) {
+		auto stdString = msclr::interop::marshal_as<std::string>(ret);
+		strcpy_s(retJson, stdString.length() + 1, stdString.c_str());
+	}
+	else {
+		auto stdString = msclr::interop::marshal_as<std::string>(err);
+		strcpy_s(strErr, stdString.length() + 1, stdString.c_str());
+	}
+	return retBool;
+}
+
+bool BOE_Common_Upload(char* subJson, char* retJson, char* strErr)
+{
+	String^ sub = gcnew String(subJson);
+	sub = System::Text::RegularExpressions::Regex::Unescape(sub);
+	String^ ret = gcnew String("");
+	String^ err = gcnew String("");
+	BOE::MesInterface::MESFUNCTION^ MES = gcnew BOE::MesInterface::MESFUNCTION();
+	bool retBool = false;
+	retBool = MES->BOE_Packing_Data_Out(sub, err);
+	if (retBool) {
+		auto stdString = msclr::interop::marshal_as<std::string>(ret);
+		strcpy_s(retJson, stdString.length() + 1, stdString.c_str());
+	}
+	else {
+		auto stdString = msclr::interop::marshal_as<std::string>(err);
+		strcpy_s(strErr, stdString.length() + 1, stdString.c_str());
+	}
+	return retBool;
+}
+
+bool BOE_Common_Download(char* reqJson, char* retJson, char* strErr)
+{
+	String^ req = gcnew String(reqJson);
+	String^ ret = gcnew String("");
+	String^ err = gcnew String("");
+	BOE::MesInterface::MESFUNCTION^ MES = gcnew BOE::MesInterface::MESFUNCTION();
+	auto retBool = MES->BOE_Packing_Data_In(req, ret, err);
 	if (retBool) {
 		auto stdString = msclr::interop::marshal_as<std::string>(ret);
 		strcpy_s(retJson, stdString.length() + 1, stdString.c_str());

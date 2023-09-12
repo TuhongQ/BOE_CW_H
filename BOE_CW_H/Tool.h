@@ -921,9 +921,6 @@ struct ResponseData
 
 	string CPL_ID;
 	string CPL_CONTENT;
-	string RKP_DATA_1;
-	string RKP_DATA_2;
-	string RKP_DATA_VD;
 	string MEID;
 	string IMEI1;
 	string IMEI2;
@@ -967,9 +964,6 @@ AJSON(ResponseData,
 
 	CPL_ID,
     CPL_CONTENT,
-	RKP_DATA_1,
-    RKP_DATA_2,
-    RKP_DATA_VD,
 	MEID,
     IMEI1,
 	IMEI2,
@@ -1001,9 +995,6 @@ struct PostData
 	string NCK_NCKNSCKSPCKRESET = "";
 	string FRP_KEY = "";
 
-	string RKP_DATA_1 = "";
-	string RKP_DATA_2 = "";
-	string RKP_DATA_VD = "";
 };
 AJSON(PostData,
 	Barcode,
@@ -1023,11 +1014,7 @@ AJSON(PostData,
 	PUBLICKEY,
 	NCK_DIAGUNLOCK,
 	NCK_NCKNSCKSPCKRESET,
-	FRP_KEY,
-
-	RKP_DATA_1,
-	RKP_DATA_2,
-	RKP_DATA_VD
+	FRP_KEY
 );
 
 #endif // !OBA
@@ -1056,6 +1043,43 @@ AJSON(PostData,
 	FactoryCode
 );
 #endif // OBA
+
+struct UploadData
+{
+	string Barcode = "";
+	string StationID = "";
+	string BarcodeType = " BSN";
+	string Line = "";
+	string UserName = "";
+	string RKP_DATA_1 = "";
+	string RKP_DATA_2 = "";
+	string RKP_DATA_VD = "";
+};
+AJSON(UploadData,
+	Barcode,StationID,
+	BarcodeType,
+	Line,UserName,
+	RKP_DATA_1,
+	RKP_DATA_2,
+	RKP_DATA_VD);
+struct DownloadData
+{
+	string Barcode;
+	string RESULT;
+	string Fail_Msg;
+	string TaskOrder;
+	string RKP_DATA_1;
+	string RKP_DATA_2;
+	string RKP_DATA_VD;
+};
+AJSON(DownloadData,
+	Barcode,
+	RESULT,
+	Fail_Msg,
+	TaskOrder,
+	RKP_DATA_1,
+	RKP_DATA_2,
+	RKP_DATA_VD);
 
 struct PostRetData
 {

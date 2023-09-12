@@ -816,6 +816,29 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		break;
 
 	}
+	case U("CheckFiveG"):
+	{
+		if (lastResponseData.FIVE_G != "Y")
+		{
+			if (StationData.softwareVerInfos.find("MODEMVER") == StationData.softwareVerInfos.end())
+			{
+				BOE_CB_OUTLog_Default("lastResponseData.FIVE_G:" + lastResponseData.FIVE_G);
+				resultSetEx(false, "Error:软件信息表中包含5G配置与Mes：FIVE_G项不一致，请联系工单维护人员确认.");
+				break;
+			}
+			else
+			{
+				resultSetFP(true,"CheckFiveG");
+				break;
+			}
+		}
+		else
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前工单Mes维护为5G版本，跳过CheckFiveG测试。");
+			break;
+		}
+
+	}
 	case U("UnSimlock")://M4新增 解锁Simlock 
 	{
 		if (lastResponseData.FIVE_G != "Y")
@@ -959,77 +982,39 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	}
 	case U("WriteRunMode")://写新型入网证
 	{
-		//if (StationData.customInfos.find("SPECIAL_DATA_SWITCH") == this->StationData.customInfos.end())
-		//{
-		//	resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[SPECIAL_DATA_SWITCH]配置，跳过当前测试。");
-		//	break;
-		//}
-		//string SPECIAL_DATA_SWITCH = StationData.customInfos["SPECIAL_DATA_SWITCH"].Value;
-		//if (!DataCalute((char*)SPECIAL_DATA_SWITCH.c_str(), 8))
-		//{
-		//	resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; SPECIAL_DATA_SWITCH[" + SPECIAL_DATA_SWITCH + "].Don't need to write value!");
-		//	break;
-		//}
-		//string xx = lastResponseData.Scramble;
-		//string xx2 = lastResponseData.ModelCode;
-		string xx = "238498";
-		string xx2 = "1384A1P1C238C48";
-		string xx3 = xx.append(xx2);
-		string strHH=binaryToHex(xx3);
-		BOE_CB_OUTLog_Default("xxxx is：" + strHH);
+		if (StationData.customInfos.find("SPECIAL_DATA_SWITCH") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[SPECIAL_DATA_SWITCH]配置，跳过当前测试。");
+			break;
+		}
+		string SPECIAL_DATA_SWITCH = StationData.customInfos["SPECIAL_DATA_SWITCH"].Value;
+		if (!DataCalute((char*)SPECIAL_DATA_SWITCH.c_str(), 8))
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; SPECIAL_DATA_SWITCH[" + SPECIAL_DATA_SWITCH + "].Don't need to write value!");
+			break;
+		}
+		if (lastResponseData.Scramble.empty())
+		{
+			resultSetEx(false, "Error:MES分配的入网证扰码是空值.");
+			break;
+		}
+		if (lastResponseData.ModelCode.empty())
+		{
+			resultSetEx(false, "Error:MES分配的入网证型号编码是空值.");
+			break;
+		}
+		string scraCode = lastResponseData.ModelCode.append(lastResponseData.Scramble);
+		BOE_CB_OUTLog_Default("scraCode is：" + scraCode);
+		string strHex = binaryToHex(scraCode);
+		BOE_CB_OUTLog_Default("strHex is：" + strHex);
 		
-		resultSetFP(WriteSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHH.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "WriteSignDataFunc");
+		resultSetFP(WriteSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHex.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "WriteSignDataFunc");
 		if (!retBool) break;
-		resultSetFP(CheckSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHH.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "CheckSignDataFunc");
-		if (!retBool) break;
-		break;
-	}
-	case U("FristWriteRKP")://M4新增11 写入谷歌证书新方案
-	{
-		if (StationData.customInfos.find("RKP_DATA_1") == this->StationData.customInfos.end())
-		{
-			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_1]配置，跳过当前测试。");
-			break;
-		}
-		if (StationData.customInfos.find("RKP_DATA_2") == this->StationData.customInfos.end())
-		{
-			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_2]配置，跳过当前测试。");
-			break;
-		}
-		if (StationData.customInfos.find("RKP_DATA_VD") == this->StationData.customInfos.end())
-		{
-			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_VD]配置，跳过当前测试。");
-			break;
-		}
-		char rkpData[8001]{ 0 };
-		char verifyData[512]{ 0 };
-		char Rkp_Data_1[4001]{ 0 };
-		char Rkp_Data_2[4001]{ 0 };
-		char sp_ch = '\"', re_ch = '\'';
-		resultSetFP(GetRkpAndVdData(CommonParam["DUTCom"].c_str(), rkpData, 8001, verifyData, 512, pHonor_callback) == 0, "GetRkpAndVdData");
-		if (!retBool) break;
-		string ostrRkp = string(rkpData);
-		BOE_CB_OUTLog_Default("orkpData is：" + ostrRkp);
-		replace_str(rkpData, sp_ch, re_ch);
-		strcat(rkpData, "EndWithTheFollowing");
-		while (strlen(rkpData) < 8000)
-		{
-			strcat(rkpData, "=");
-		}
-		strncpy_s(Rkp_Data_1, rkpData, 4000);
-		strncpy_s(Rkp_Data_2, rkpData + 4000, 4000);
-		string strRkp = string(rkpData);
-		BOE_CB_OUTLog_Default("rkpData is：" + strRkp);
-		string strverifyData = string(verifyData);
-		BOE_CB_OUTLog_Default("strverifyData is：" + strverifyData);
-		//上传MES
-		this->dataParam.RKP_DATA_1 = Rkp_Data_1;
-		this->dataParam.RKP_DATA_2 = Rkp_Data_2;
-		this->dataParam.RKP_DATA_VD = verifyData;
-		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");
+		resultSetFP(CheckSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHex.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "CheckSignDataFunc");
 		if (!retBool) break;
 		break;
 	}
+
 	case U("WriteRKP")://M4新增11 写入谷歌证书新方案
 	{
 		if (StationData.customInfos.find("RKP_DATA_1") == this->StationData.customInfos.end())
@@ -1089,9 +1074,9 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		string strverifyData = string(verifyData);
 		BOE_CB_OUTLog_Default("strverifyData is：" + strverifyData);
 		//上传MES
-		this->dataParam.RKP_DATA_1 = Rkp_Data_1;
-		this->dataParam.RKP_DATA_2 = Rkp_Data_2;
-		this->dataParam.RKP_DATA_VD = verifyData;
+		//this->dataParam.RKP_DATA_1 = Rkp_Data_1;
+		//this->dataParam.RKP_DATA_2 = Rkp_Data_2;
+		//this->dataParam.RKP_DATA_VD = verifyData;
 		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");
 		if (!retBool) break;
 		break;
@@ -2462,6 +2447,38 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		if (!retBool)break;
 		break;
 	}
+	case U("CheckRunMode")://Check新型入网证
+	{
+		if (StationData.customInfos.find("SPECIAL_DATA_SWITCH") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[SPECIAL_DATA_SWITCH]配置，跳过当前测试。");
+			break;
+		}
+		string SPECIAL_DATA_SWITCH = StationData.customInfos["SPECIAL_DATA_SWITCH"].Value;
+		if (!DataCalute((char*)SPECIAL_DATA_SWITCH.c_str(), 8))
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; SPECIAL_DATA_SWITCH[" + SPECIAL_DATA_SWITCH + "].Don't need to write value!");
+			break;
+		}
+		if (lastResponseData.Scramble.empty())
+		{
+			resultSetEx(false, "Error:MES分配的入网证扰码是空值.");
+			break;
+		}
+		if (lastResponseData.ModelCode.empty())
+		{
+			resultSetEx(false, "Error:MES分配的入网证型号编码是空值.");
+			break;
+		}
+		string scraCode = lastResponseData.ModelCode.append(lastResponseData.Scramble);
+		BOE_CB_OUTLog_Default("scraCode is：" + scraCode);
+		string strHex = binaryToHex(scraCode);
+		BOE_CB_OUTLog_Default("strHex is：" + strHex);
+
+		resultSetFP(CheckSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHex.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "CheckSignDataFunc");
+		if (!retBool) break;
+		break;
+	}
 	case U("CheckPhyno")://M4新增4 校验OEMinfo物理号信息
 	{
 		if (lastResponseData.FIVE_G != "Y")
@@ -2541,6 +2558,53 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		break;
 
 	}
+	case U("UploadRKP"): 
+	{
+		if (StationData.customInfos.find("RKP_DATA_1") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_1]配置，跳过当前测试。");
+			break;
+		}
+		if (StationData.customInfos.find("RKP_DATA_2") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_2]配置，跳过当前测试。");
+			break;
+		}
+		if (StationData.customInfos.find("RKP_DATA_VD") == this->StationData.customInfos.end())
+		{
+			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_VD]配置，跳过当前测试。");
+			break;
+		}
+		char rkpData[8001]{ 0 };
+		char verifyData[512]{ 0 };
+		char Rkp_Data_1[4001]{ 0 };
+		char Rkp_Data_2[4001]{ 0 };
+		char sp_ch = '\"', re_ch = '\'';
+		resultSetFP(GetRkpAndVdData(CommonParam["DUTCom"].c_str(), rkpData, 8001, verifyData, 512, pHonor_callback) == 0, "GetRkpAndVdData");
+		if (!retBool) break;
+		string ostrRkp = string(rkpData);
+		BOE_CB_OUTLog_Default("orkpData is：" + ostrRkp);
+		replace_str(rkpData, sp_ch, re_ch);
+		strcat(rkpData, "EndWithTheFollowing");
+		while (strlen(rkpData) < 8000)
+		{
+			strcat(rkpData, "=");
+		}
+		strncpy_s(Rkp_Data_1, rkpData, 4000);
+		strncpy_s(Rkp_Data_2, rkpData + 4000, 4000);
+		string strRkp = string(rkpData);
+		BOE_CB_OUTLog_Default("rkpData is：" + strRkp);
+		string strverifyData = string(verifyData);
+		BOE_CB_OUTLog_Default("strverifyData is：" + strverifyData);
+		//上传MES
+		this->uploadParam.RKP_DATA_1 = Rkp_Data_1;
+		this->uploadParam.RKP_DATA_2 = Rkp_Data_2;
+		this->uploadParam.RKP_DATA_VD = verifyData;
+		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");
+		if (!retBool) break;
+		MesUpload();
+		break;
+	}
 
 	case U("CheckRKP")://M4新增12 校验RKP（谷歌证书新方案）
 	{
@@ -2549,14 +2613,20 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 锁卡表没有[RKP_DATA_VD]配置，跳过当前测试。");
 			break;
 		}
-		if (lastResponseData.RKP_DATA_VD.empty())
+		bool ret = MesDownload(lastResponseData.Barcode, lastDownloadData);
+		if (!ret)
+		{
+			resultSetEx(false, "Error:MES请求RKP失败！");
+		}
+		BOE_CB_OUTLog_DefaultAndShowInfo("从MES请求数据完成。");
+		if (lastDownloadData.RKP_DATA_VD.empty())
 		{
 			resultSetEx(false, "Error:MES分配的RKP_DATA_VD是空值.");
 			break;
 		}
 		char verifyData[512]{ 0 };
-		BOE_CB_OUTLog_Default("MES_RKP_DATA_VD is：" + lastResponseData.RKP_DATA_VD);
-		strcpy_s(verifyData, lastResponseData.RKP_DATA_VD.c_str());
+		BOE_CB_OUTLog_Default("MES_RKP_DATA_VD is：" + lastDownloadData.RKP_DATA_VD);
+		strcpy_s(verifyData, lastDownloadData.RKP_DATA_VD.c_str());
 		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");
 		if (!retBool) break;
 		break;
@@ -2971,7 +3041,7 @@ void BOE_CW::CheckBarcode(ParamData paraData, RetData& retData, ErrData& errData
 		BOE_CB_OUTLog_DefaultAndShowInfo("Error:读取单板SN失败");
 		return;
 	}
-	//strcpy(buff, "0203UN2383H00020"); //测试直接赋值qth
+	//strcpy(buff, "0215UN2391H00007"); //测试直接赋值qth
 	string readBarcode(buff);
 	BOE_CB_OUTLog_DefaultAndShowInfo("Read BSN:" + readBarcode + ".");
 	BOE_CB_SN(buff);
@@ -3571,6 +3641,7 @@ bool BOE_CW::getMesDataAndCheck(string Barcode, string& err)
 				ret = false;
 				break;
 			}
+			
 		}
 	}
 	else
@@ -3709,9 +3780,6 @@ bool BOE_CW::MesPostPass()
 	postData.NCK_NCKNSCKSPCKRESET = "";
 	postData.FRP_KEY = dataParam.FRP_KEY;
 
-	postData.RKP_DATA_1 = dataParam.RKP_DATA_1;
-	postData.RKP_DATA_2 = dataParam.RKP_DATA_2;
-	postData.RKP_DATA_VD = dataParam.RKP_DATA_VD;
 #endif // CW
 #endif // !OBA
 #ifdef OBA
@@ -3838,6 +3906,124 @@ bool BOE_CW::MesPost(PostData postData)
 		BOE_CB_OUTLog_Default("Mes post ret:" + retStr);
 	}
 	return retBool;
+}
+
+bool BOE_CW::MesUpload() 
+{
+	UploadData uploadData;
+	uploadData.Barcode = lastResponseData.Barcode;
+	uploadData.StationID = CommonParam["StationName"];
+	uploadData.BarcodeType = "PSN";
+	if (CommonParam.find("BarcodeType") != CommonParam.end())
+	{
+		uploadData.BarcodeType = CommonParam["BarcodeType"];
+	}
+	uploadData.Line = CommonParam["LineName"];
+	uploadData.UserName = CommonParam["Operator"];
+	uploadData.RKP_DATA_1 = uploadParam.RKP_DATA_1;
+	uploadData.RKP_DATA_2 = uploadParam.RKP_DATA_2;
+	uploadData.RKP_DATA_VD = uploadParam.RKP_DATA_VD;
+
+	ajson::string_stream ss;
+	ajson::save_to(ss, uploadData);
+	string post = ss.str();
+	BOE_CB_OUTLog_Default("mes upload:" + string_To_UTF8(unicodeToCHI(post)));
+	mes_last_error = "";
+
+	shared_ptr<char> retPtr(new char[8192 * 4] { 0 }, std::default_delete<char[]>());
+	shared_ptr<char> errPtr(new char[8192 * 4] { 0 }, std::default_delete<char[]>());
+
+	retBool = BOE_Common_Upload((char*)post.c_str(), retPtr.get(), errPtr.get());
+
+	// 设置对应参数
+	if (!retBool)
+	{
+		mes_last_error = string_To_UTF8(string(errPtr.get()));
+		BOE_CB_OUTLog_Default("Mes upload error:" + mes_last_error);
+		BOE_CB_ShowInfo("Mes upload error:" + mes_last_error);
+	}
+	else
+	{
+		string retStr = string_To_UTF8(string(retPtr.get()));
+		BOE_CB_OUTLog_Default("Mes upload ret:" + retStr);
+	}
+	return retBool;
+}
+
+bool BOE_CW::MesDownload(string Barcode, DownloadData& downloadData)
+{
+	RequestData requestData;
+	requestData.Barcode = Barcode;
+	requestData.BarcodeType = "PSN";
+	if (CommonParam.find("BarcodeType") != CommonParam.end())
+	{
+		requestData.BarcodeType = CommonParam["BarcodeType"];
+	}
+	if (CommonParam.find("BarcodeType") != CommonParam.end())
+	{
+		requestData.BarcodeType = CommonParam["BarcodeType"];
+	}
+	requestData.StationID = CommonParam["StationName"];
+	if (CommonParam.find("TaskOrder") != CommonParam.end())
+	{
+		requestData.TaskOrder = CommonParam["TaskOrder"];
+	}
+	if (CommonParam.find("FactoryCode") != CommonParam.end())
+	{
+		requestData.FactoryCode = CommonParam["FactoryCode"];
+	}
+	if (CommonParam.find("VersionListType") != CommonParam.end())
+	{
+		requestData.VersionListType = CommonParam["VersionListType"];
+	}
+	else
+	{
+		requestData.VersionListType = CommonParam["StationName"];
+	}
+	if (CommonParam.find("Operator") != CommonParam.end())
+	{
+		requestData.UserName = CommonParam["Operator"];
+	}
+	if (CommonParam.find("LineName") != CommonParam.end())
+	{
+		requestData.Line = CommonParam["LineName"];
+	}
+	ajson::string_stream ss;
+	ajson::save_to(ss, requestData);
+	string req = ss.str();
+	BOE_CB_OUTLog_Default("MES请求:\r\n" + req);
+	shared_ptr<char> retPtr(new char[8192 * 4] { 0 }, std::default_delete<char[]>());
+	shared_ptr<char> errPtr(new char[8192 * 4] { 0 }, std::default_delete<char[]>());
+	mes_last_error = "";
+	std::lock_guard<std::mutex> m(mutexMes);
+	bool retBL = BOE_Common_Download((char*)req.c_str(), retPtr.get(), errPtr.get());
+	std::cout << __FUNCTION__ << "-->>" << retPtr.get();
+	// 设置对应参数
+	if (retBL)
+	{
+		auto retStrig = string_To_UTF8(string(retPtr.get()));
+		BOE_CB_OUTLog_Default("MES回复:\r\n" + retStrig);
+		try
+		{
+			ajson::load_from_buff(downloadData, retStrig.c_str(), strlen(retPtr.get()));
+		}
+		catch (const std::exception& e)
+		{
+			BOE_CB_MessageBoxData("解析MES回复值错误:\r\n" + string(e.what()), "Error", "Error");
+			retBL = false;
+		}
+		ajson::string_stream ss;
+		ajson::save_to(ss, downloadData);
+		string rsp = ss.str();
+		BOE_CB_OUTLog_Default("解析重生成Json:\r\n" + rsp);
+	}
+	else
+	{
+		mes_last_error = string_To_UTF8(string(errPtr.get()));
+		BOE_CB_OUTLog_Default("MES返回Error:\r\n" + mes_last_error);
+		BOE_CB_ShowInfo("MES返回Error:\r\n" + mes_last_error);
+	}
+	return retBL;
 }
 
 #pragma endregion hornor
