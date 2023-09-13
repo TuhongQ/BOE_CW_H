@@ -820,7 +820,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 	{
 		if (lastResponseData.FIVE_G != "Y")
 		{
-			if (StationData.softwareVerInfos.find("MODEMVER") == StationData.softwareVerInfos.end())
+			if (StationData.softwareVerInfos.find("MODEMVER") != StationData.softwareVerInfos.end())
 			{
 				BOE_CB_OUTLog_Default("lastResponseData.FIVE_G:" + lastResponseData.FIVE_G);
 				resultSetEx(false, "Error:软件信息表中包含5G配置与Mes：FIVE_G项不一致，请联系工单维护人员确认.");
@@ -828,7 +828,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			}
 			else
 			{
-				resultSetFP(true,"CheckFiveG");
+				resultSetFP(true, "CheckFiveG");
 				break;
 			}
 		}
@@ -837,7 +837,6 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前工单Mes维护为5G版本，跳过CheckFiveG测试。");
 			break;
 		}
-
 	}
 	case U("UnSimlock")://M4新增 解锁Simlock 
 	{
@@ -1007,7 +1006,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		BOE_CB_OUTLog_Default("scraCode is：" + scraCode);
 		string strHex = binaryToHex(scraCode);
 		BOE_CB_OUTLog_Default("strHex is：" + strHex);
-		
+
 		resultSetFP(WriteSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHex.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "WriteSignDataFunc");
 		if (!retBool) break;
 		resultSetFP(CheckSignDataFunc(CommonParam["DUTCom"].c_str(), dogInfoPtr->dog, dogInfoPtr->outKeyID[2], strHex.c_str(), "RSA2048_SHA256_PSS", "NAL", IsQualPlat, pHonor_callback) == 0, "CheckSignDataFunc");
@@ -2443,7 +2442,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			resultSetEx(true, "[" + TestMathed + "] This Test Item Is Skiped; 当前非5G产品，跳过当前测试。");
 			break;
 		}
-		resultSetFP(QualtoATCheckNVStatus(CommonParam["DUTCom"].c_str(),  pHonor_callback) == 0, "QualtoATCheckNVStatus");
+		resultSetFP(QualtoATCheckNVStatus(CommonParam["DUTCom"].c_str(), pHonor_callback) == 0, "QualtoATCheckNVStatus");
 		if (!retBool)break;
 		break;
 	}
@@ -2558,7 +2557,7 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		break;
 
 	}
-	case U("UploadRKP"): 
+	case U("UploadRKP"):
 	{
 		if (StationData.customInfos.find("RKP_DATA_1") == this->StationData.customInfos.end())
 		{
@@ -2576,14 +2575,14 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			break;
 		}
 		char rkpData[8001]{ 0 };
-		char verifyData[512]{ 0 };
+		char verifyData[513]{ 0 };
 		char Rkp_Data_1[4001]{ 0 };
 		char Rkp_Data_2[4001]{ 0 };
 		char sp_ch = '\"', re_ch = '\'';
 		resultSetFP(GetRkpAndVdData(CommonParam["DUTCom"].c_str(), rkpData, 8001, verifyData, 512, pHonor_callback) == 0, "GetRkpAndVdData");
 		if (!retBool) break;
 		string ostrRkp = string(rkpData);
-		BOE_CB_OUTLog_Default("orkpData is：" + ostrRkp);
+		BOE_CB_OUTLog_Default("rkpData is：" + ostrRkp);
 		replace_str(rkpData, sp_ch, re_ch);
 		strcat(rkpData, "EndWithTheFollowing");
 		while (strlen(rkpData) < 8000)
@@ -2592,17 +2591,34 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		}
 		strncpy_s(Rkp_Data_1, rkpData, 4000);
 		strncpy_s(Rkp_Data_2, rkpData + 4000, 4000);
-		string strRkp = string(rkpData);
-		BOE_CB_OUTLog_Default("rkpData is：" + strRkp);
+		string strRkp1 = string(Rkp_Data_1);
+		BOE_CB_OUTLog_Default("Rkp_Data_1 is：" + strRkp1);
+		string strRkp2 = string(Rkp_Data_2);
+		BOE_CB_OUTLog_Default("Rkp_Data_2 is：" + strRkp2);
+
+		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");//先验证，再拼凑上传
+		if (!retBool) break;
+
+		strcat(verifyData, "EndWithTheFollowing");
+		while (strlen(verifyData) < 512)
+		{
+			strcat(verifyData, "=");
+		}
 		string strverifyData = string(verifyData);
-		BOE_CB_OUTLog_Default("strverifyData is：" + strverifyData);
+		BOE_CB_OUTLog_Default("RKP_DATA_VD is：" + strverifyData);
 		//上传MES
 		this->uploadParam.RKP_DATA_1 = Rkp_Data_1;
 		this->uploadParam.RKP_DATA_2 = Rkp_Data_2;
 		this->uploadParam.RKP_DATA_VD = verifyData;
-		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");
-		if (!retBool) break;
-		MesUpload();
+		if (MesUpload())
+		{
+			BOE_CB_OUTLog_Default("RKP_DATA上传MES成功！");
+			resultSetFP(true, "UploadRKP");
+		}
+		else
+		{
+			resultSetFP(false, "UploadRKP");
+		}
 		break;
 	}
 
@@ -2626,7 +2642,10 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 		}
 		char verifyData[512]{ 0 };
 		BOE_CB_OUTLog_Default("MES_RKP_DATA_VD is：" + lastDownloadData.RKP_DATA_VD);
-		strcpy_s(verifyData, lastDownloadData.RKP_DATA_VD.c_str());
+		size_t pos = lastDownloadData.RKP_DATA_VD.find("EndWithTheFollowing");
+		string temp = lastDownloadData.RKP_DATA_VD.substr(0, pos);
+		BOE_CB_OUTLog_Default("解析完成：verifyData is：" + temp);
+		strcpy_s(verifyData, temp.c_str());
 		resultSetFP(VerifyRkpData(CommonParam["DUTCom"].c_str(), verifyData, pHonor_callback) == 0, "VerifyRkpData");
 		if (!retBool) break;
 		break;
@@ -3199,7 +3218,6 @@ void BOE_CW::EraseModem(ParamData paraData, RetData& retData, ErrData& errData)
 	// CUSTOMIZATIONKEYACTION_API int  QualSetDutOffline(const char* addr, void* callback);
 	resultSetFP(QualSetDutOffline(CommonParam["DUTCom"].c_str(), pHonor_callback) == 0, headLog + " QualSetDutOffline ");
 	if (!retBool) return;
-
 	// 返工手机清除modemst1, modemst2
 	// 
 	// 功能: Q平台特有逻辑，清除手机中运行态使用的NV数据（保存在modemst1 和modemst2分区中，指令发送完重启生效）
@@ -3208,6 +3226,8 @@ void BOE_CW::EraseModem(ParamData paraData, RetData& retData, ErrData& errData)
 	resultSetFP(QualEraseModem(CommonParam["DUTCom"].c_str(), pHonor_callback) == 0, headLog + " QualEraseModem ");
 	if (!retBool) return;
 
+
+
 	// 将返工手机设置模式为非返工模式（信息清除之后要设置成非返工模式，后面组件正常写入信息）
 	// 
 	// 功能: Q平台特有逻辑，设置手机为NRW模式(非返工模式，即正常模式)
@@ -3215,14 +3235,12 @@ void BOE_CW::EraseModem(ParamData paraData, RetData& retData, ErrData& errData)
 	// CUSTOMIZATIONKEYACTION_API int  QualSetNRWFlag(const char* addr, void* callback);
 	resultSetFP(QualSetNRWFlag(CommonParam["DUTCom"].c_str(), pHonor_callback) == 0, headLog + " QualSetNRWFlag ");
 	if (!retBool) return;
-
 	// 重启modem子系统（清除信息后需要重启Modem子系统）
 	// 功能: Q平台特有逻辑，AP侧触发modem子系统重启（支持5.0 R上qcom产品）
 	// 返回: -1 表示失败，0 表示成功
 	// CUSTOMIZATIONKEYACTION_API int  QualRebootModem(const char* addr, void* callback);
 	resultSetFP(QualRebootModem(CommonParam["DUTCom"].c_str(), pHonor_callback) == 0, headLog + " QualRebootModem ");
 	if (!retBool) return;
-
 	// 等待15秒 不用线程等待了 H的接口中有相关函数
 	// std::this_thread::sleep_for(std::chrono::milliseconds(15000));
 
@@ -3236,6 +3254,7 @@ void BOE_CW::EraseModem(ParamData paraData, RetData& retData, ErrData& errData)
 	// 重新鉴权
 	Authentication(paraData, retData, errData);
 	if (!retBool) return;
+
 	return;
 }
 
@@ -3641,7 +3660,7 @@ bool BOE_CW::getMesDataAndCheck(string Barcode, string& err)
 				ret = false;
 				break;
 			}
-			
+
 		}
 	}
 	else
@@ -3908,7 +3927,7 @@ bool BOE_CW::MesPost(PostData postData)
 	return retBool;
 }
 
-bool BOE_CW::MesUpload() 
+bool BOE_CW::MesUpload()
 {
 	UploadData uploadData;
 	uploadData.Barcode = lastResponseData.Barcode;
