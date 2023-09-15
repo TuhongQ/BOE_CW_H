@@ -1002,7 +1002,11 @@ bool BOE_CW::BeginTest(char* RequestMathed, ParamData paraData, RetData& retData
 			resultSetEx(false, "Error:MES分配的入网证型号编码是空值.");
 			break;
 		}
-		string scraCode = lastResponseData.ModelCode.append(lastResponseData.Scramble);
+		string strModelCode = lastResponseData.ModelCode;
+		BOE_CB_OUTLog_Default("strModelCode is：" + strModelCode);
+		string strScramble = lastResponseData.Scramble;
+		BOE_CB_OUTLog_Default("strScramble is：" + strScramble);
+		string scraCode = strModelCode.append(strScramble);
 		BOE_CB_OUTLog_Default("scraCode is：" + scraCode);
 		string strHex = binaryToHex(scraCode);
 		BOE_CB_OUTLog_Default("strHex is：" + strHex);
@@ -3061,6 +3065,7 @@ void BOE_CW::CheckBarcode(ParamData paraData, RetData& retData, ErrData& errData
 		return;
 	}
 	//strcpy(buff, "0215UN2391H00007"); //测试直接赋值qth
+	//strcpy(buff, "0216UN2397H00135"); //入网证测试直接赋值qth
 	string readBarcode(buff);
 	BOE_CB_OUTLog_DefaultAndShowInfo("Read BSN:" + readBarcode + ".");
 	BOE_CB_SN(buff);
